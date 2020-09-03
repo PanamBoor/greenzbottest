@@ -1,18 +1,71 @@
 # Обозначаем слова, которые отвечают за доход и за расход ( или же в долг, пока нет )
 
-dohod_sinonims = 'работа, зарплата, бизнес, продажа бизнеса'
+dohod_sinonims = 'работа, бизнес, продажа бизнеса'
+rashod_sinonims = 'девушка, бензин, машина'
+v_dolg_sinonims = 'дал в долг, отдал в долг, закинул в долг'
+kratko_dni_sinonims = 'пн, вт, ср, чт, пт, сб, вс'
 
-# Получаемое искомое слово
+# Получаемое сообщение на разбор.
 find_word = input()
 
-# Делим строку синонимов, чтобы проверить это в доход, в расход, в долг или не в разобранное
+# Разбираем искомую фразы через пробел на слова.
+find_word_fraze = find_word.split(' ')
+print('Разобранная фраза на слова: ' + str(find_word_fraze))
+
+# Делим строку синонимов, чтобы проверить это в доход, в расход, в долг или не в разобранное.
 sort_dohod_sinonims = dohod_sinonims.split(', ')
 print('Делим слова через запятую: ' + str(sort_dohod_sinonims))
 
-# Проверяем есть ли такой синоним в доходе
-if sort_dohod_sinonims.count(find_word)>0:
-	print('Eto dohod!')
-else:
-	print('Ne dohod')
+sort_rashod_sinonims = rashod_sinonims.split(', ')
+print('Делим слова через запятую: ' + str(sort_rashod_sinonims))
+
+sort_v_dolg_sinonims = v_dolg_sinonims.split(', ')
+print('Делим слова через запятую: ' + str(sort_v_dolg_sinonims))
+
+sort_dni_sinonims = dni_sinonims.split(', ')
+print('Делим слова через запятую: ' + str(sort_dni_sinonims))
+
+# Начинаем проверять каждое слово в листе через проверки на схожесть ключевых слов.
+for element in find_word_fraze:
+	print(str(element))
+
+	# Проверяем число ли данный элемент, чтобы вытянуть сумму. 
+	if element.isalpha() == False:
+		print('Eto chisla')
+		# Проверяем, если в этом числах точка и размер из 5 символов в элементе
+		if element.count('.') and len(element) == 5:
+			print('Eto den i mesyac')
+		continue
+
+	# Проверяем ключевое ли слово дней это. 
+	if sort_dni_sinonims.count(element)>0:
+		print('Eto den: ' + str(element))
+		continue
+
+	# Проверяем ключевое слово вчера, чтобы записывать сразу дату с функционал этого ключевого слова.
+	if element == 'вчера':
+		print('Eto bilo vchera!')
+		continue
+
+	# Проверяем ключевое слово позавчера, чтобы записывать сразу дату с функционал этого ключевого слова.
+	if element == 'позавчера':
+		print('Eto bilo pozavchera!')
+		continue
+
+	# Проверяем есть ли такой синоним ( одно слово ) в доходах, расходах, долгах. 
+	if sort_dohod_sinonims.count(element)>0:
+		print('Eto dohod!')
+		continue
+	elif sort_rashod_sinonims.count(element)>0:
+		print('Eto rashod')
+		continue
+	elif sort_v_dolg_sinonims.count(element)>0:
+		print('Eto v dolg')
+		continue
+	else:
+		print('Ne razobral (')
+
+
+	# Убираем 
 
 
