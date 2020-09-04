@@ -85,7 +85,6 @@ for element in range(0,len(find_word_fraze)):
 		print('Ne razobral (')
 
 
-=======
 # Обозначаем слова, которые отвечают за доход и за расход ( или же в долг, пока нет )
 
 dohod_sinonims = 'работа, бизнес, продажа бизнеса'
@@ -152,7 +151,3 @@ for element in find_word_fraze:
 		continue
 	else:
 		print('Ne razobral (')
-
-
-	# Убираем 
-
