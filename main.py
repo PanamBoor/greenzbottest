@@ -2,7 +2,7 @@
 from config import BOT_TOKEN
 from aiogram import Bot, Dispatcher, executor, types
 import httplib2
-from keyboards import greet_kb,greet_settings,greet_time,greet_minuts
+from keyboards import greet_kb,greet_settings,greet_time,greet_minuts,greet_delete
 import apiclient.discovery
 from oauth2client.service_account import ServiceAccountCredentials
 from aiogram.dispatcher.filters import Command, Text
@@ -671,7 +671,20 @@ async def btn_balance(message: types.Message):
         await bot.send_message(message.from_user.id,f'Укажите минуты для уведомлений:',reply_markup=greet_minuts)
         pass
 
+#команда delete
+@dp.message_handler(commands="delete", state="*")
+async def samples_command(message: types.Message):
+    await bot.send_message(message.from_user.id,f'Вы действительно хотите удалить свой аккаунт?\n'
+                                                f'Файл на Гугл Диске сохранится.:',reply_markup=greet_delete)
 
+    # нажатие на кнопку Да
+    @dp.message_handler(Text(equals=["Да"]))
+    async def delete_yes(message: types.Message):
+        pass
+    # нажатие на кнопку Нет
+    @dp.message_handler(Text(equals=["Нет"]))
+    async def delete_no(message: types.Message):
+        await bot.send_message(message.from_user.id,f'Вы отменили удаление аккаунта.')
 # запуск телеграм бота
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
