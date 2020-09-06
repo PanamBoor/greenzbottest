@@ -2,13 +2,14 @@
 from config import BOT_TOKEN
 from aiogram import Bot, Dispatcher, executor, types
 import httplib2
-from keyboards import greet_kb
+from keyboards import greet_kb,greet_settings
 import apiclient.discovery
 from oauth2client.service_account import ServiceAccountCredentials
 from aiogram.dispatcher.filters import Command, Text
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
+
 
 memory_storage = MemoryStorage()
 # подключаем токен бота
@@ -364,6 +365,9 @@ async def email(message: types.Message, state: FSMContext):
     await state.update_data(sity=message.text)
     user_data = await state.get_data()
     print({user_data['sity']})
+    global sity
+    sity = {user_data['sity']}
+    print(sity)
     await registration.next()
     await bot.send_message(message.from_user.id, f'ШАГ 3/3. Укажите лимит ежемесячных расходов.')
 
@@ -375,6 +379,8 @@ async def email(message: types.Message, state: FSMContext):
         # сохраняю бюджет который вводит пользователь
         await state.update_data(budjet=message.text)
         user_data = await state.get_data()
+        global budjet
+        budjet = {user_data['budjet']}
         print({user_data['budjet']})
         await bot.send_message(message.from_user.id, f'Поздравляем!Вы успешно зарегестрированны в Greenz.')
         await bot.send_message(message.from_user.id, f'Теперь вы можете отправлять доходы и расходы нашему'
@@ -550,8 +556,24 @@ async def samples_command(message: types.Message):
                         f'Для доходов работают те же правила.\n\n'
                         f'“25.08 дал в долг сестре 15000”\n'
                         f'И для долгов тоже.')
+#команда settings
+@dp.message_handler(commands="settings", state="*")
+async def samples_command(message: types.Message):
+    await bot.send_message(message.from_user.id,f'Выберите настройки, которые хотите поменять:',reply_markup=greet_settings)
+
+#нажатие на кнопку Город
+@dp.message_handler(Text(equals=["1. Город"]))
+async def btn_balance(message: types.Message):
+    await bot.send_message(message.from_user.id,f'Текущий город:"{sity}". Укажите новый город:')
+    new_sity = sity
 
 
+
+
+#нажатие на кнопку Время напоминания
+@dp.message_handler(Text(equals=["2. Время напоминания"]))
+async def btn_balance(message: types.Message):
+    await bot.send_message(message.from_user.id,f'Укажите час, в котором присылать уведомления:')
 # запуск телеграм бота
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
