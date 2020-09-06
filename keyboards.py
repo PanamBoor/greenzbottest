@@ -30,7 +30,49 @@ gorod_btn
 greet_settings.row(time_btn)
 
 
+time_00 = KeyboardButton("00",callback_data = '00')
+time_01 = KeyboardButton("01",callback_data = '01')
+time_02 = KeyboardButton("02",callback_data = '02')
+time_03 = KeyboardButton("03",callback_data = '03')
+time_04 = KeyboardButton("04",callback_data = '04')
+time_05 = KeyboardButton("05",callback_data = '05')
+time_06 = KeyboardButton("06",callback_data = '06')
+time_07 = KeyboardButton("07",callback_data = '07')
+time_08 = KeyboardButton("08",callback_data = '08')
+time_09 = KeyboardButton("09",callback_data = '09')
+time_10 = KeyboardButton("10",callback_data = '10')
+time_11 = KeyboardButton("11",callback_data = '11')
+time_12 = KeyboardButton("12",callback_data = '12')
+time_13 = KeyboardButton("13",callback_data = '13')
+time_14 = KeyboardButton("14",callback_data = '14')
+time_15 = KeyboardButton("15",callback_data = '15')
+time_16 = KeyboardButton("16",callback_data = '16')
+time_17 = KeyboardButton("17",callback_data = '17')
+time_18 = KeyboardButton("18",callback_data = '18')
+time_19 = KeyboardButton("19",callback_data = '19')
+time_20 = KeyboardButton("20",callback_data = '20')
+time_21 = KeyboardButton("21",callback_data = '21')
+time_22 = KeyboardButton("22",callback_data = '22')
+time_23= KeyboardButton("23",callback_data = '23')
+
+time_otmena = KeyboardButton("Отключить напоминания",callback_data = 'otmena')
+
+
+#кнопки команда settings 2.Время напоминания
+greet_time = ReplyKeyboardMarkup(resize_keyboard=True,one_time_keyboard=True).row(
+   time_00,time_01,time_02,time_03,time_04,time_05
+)
+greet_time.row(time_06,time_07,time_08,time_09,time_10,time_11)
+greet_time.row(time_12,time_13,time_14,time_15,time_16,time_17)
+greet_time.row(time_18,time_19,time_20,time_21,time_22,time_23)
+greet_time.row(time_otmena)
 
 
 
-
+btn_minut_00 = KeyboardButton("00")
+btn_minut_15 = KeyboardButton("15")
+btn_minut_30 = KeyboardButton("30")
+btn_minut_45 = KeyboardButton("45")
+greet_minuts = ReplyKeyboardMarkup(resize_keyboard=True,one_time_keyboard=True).row(
+   btn_minut_00,btn_minut_15,btn_minut_30,btn_minut_45
+)

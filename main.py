@@ -2,34 +2,27 @@
 from config import BOT_TOKEN
 from aiogram import Bot, Dispatcher, executor, types
 import httplib2
-from keyboards import greet_kb,greet_settings
+from keyboards import greet_kb,greet_settings,greet_time,greet_minuts
 import apiclient.discovery
 from oauth2client.service_account import ServiceAccountCredentials
 from aiogram.dispatcher.filters import Command, Text
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
-
-
 memory_storage = MemoryStorage()
 # подключаем токен бота
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot, storage=memory_storage)
-
 CREDENTIALS_FILE = 'cread.json'  # Имя файла с закрытым ключом, вы должны подставить свое
 # Читаем ключи из файла
 credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, [
     'https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'])
-
 httpAuth = credentials.authorize(httplib2.Http())  # Авторизуемся в системе
-service = apiclient.discovery.build('sheets', 'v4',
-                                    http=httpAuth)  # Выбираем работу с таблицами и 4 версию API
+service = apiclient.discovery.build('sheets', 'v4',http=httpAuth)  # Выбираем работу с таблицами и 4 версию API
 class registration(StatesGroup):
     waiting_for_gmail = State()
     waiting_for_sity = State()
     waiting_for_budjet = State()
-
-
 # команда start
 @dp.message_handler(commands="start", state="*")
 async def start(message: types.Message):
@@ -44,7 +37,6 @@ async def email(message: types.Message, state: FSMContext):
     await state.update_data(gmail=message.text)
     user_data = await state.get_data()
     gmail = user_data['gmail']
-    print({user_data['gmail']})
     # cоздем словарь где хранятся виды электронной почты
     check_email = ['@gmail.com', 'abcdefghijklmnopqrstuvwxyz@.']
     # пишем проверку на правильность ввода электронной почты
@@ -55,21 +47,19 @@ async def email(message: types.Message, state: FSMContext):
                                    f'Дождитесь завершения регестрации! Это может занять пару минут')
             await registration.next()
 
-
             spreadsheet = service.spreadsheets().create(body={
                 'properties': {'title': 'Greenz - мои финансы', 'locale': 'ru_RU'},
                 'sheets': [{'properties': {'sheetType': 'GRID',
                                            'sheetId': 0,
                                            'title': 'Сводка',
-                                           'gridProperties': {'rowCount': 100, 'columnCount': 15}}}]
+                                           'gridProperties': {'rowCount': 200, 'columnCount': 30}}}]
             }).execute()
             await bot.send_message(message.from_user.id,"Создание таблицы....")
             spreadsheetId = spreadsheet['spreadsheetId']  # сохраняем идентификатор файла
-            print('https://docs.google.com/spreadsheets/d/' + spreadsheetId)
+            #сохраняю ссылку на таблицу
             global link
             link = 'https://docs.google.com/spreadsheets/d/' + spreadsheetId
-            driveService = apiclient.discovery.build('drive', 'v3',
-                                                     http=httpAuth)  # Выбираем работу с Google Drive и 3 версию API
+            driveService = apiclient.discovery.build('drive', 'v3',http=httpAuth)  # Выбираем работу с Google Drive и 3 версию API
             access = driveService.permissions().create(
                 fileId=spreadsheetId,
                 body={'type': 'user', 'role': 'writer', 'emailAddress': gmail},
@@ -88,8 +78,8 @@ async def email(message: types.Message, state: FSMContext):
                                 "properties": {
                                     "title": "Статистика",
                                     "gridProperties": {
-                                        "rowCount": 20,
-                                        "columnCount": 12
+                                        "rowCount": 100,
+                                        "columnCount": 20
                                     }
                                 }
                             }
@@ -107,8 +97,8 @@ async def email(message: types.Message, state: FSMContext):
                                 "properties": {
                                     "title": "Графики",
                                     "gridProperties": {
-                                        "rowCount": 20,
-                                        "columnCount": 12
+                                        "rowCount": 100,
+                                        "columnCount": 20
                                     }
                                 }
                             }
@@ -128,8 +118,8 @@ async def email(message: types.Message, state: FSMContext):
                                 "properties": {
                                     "title": "Расходы",
                                     "gridProperties": {
-                                        "rowCount": 20,
-                                        "columnCount": 12
+                                        "rowCount": 100,
+                                        "columnCount": 20
                                     }
                                 }
                             }
@@ -148,8 +138,8 @@ async def email(message: types.Message, state: FSMContext):
                                 "properties": {
                                     "title": "Доходы",
                                     "gridProperties": {
-                                        "rowCount": 20,
-                                        "columnCount": 12
+                                        "rowCount": 100,
+                                        "columnCount": 20
                                     }
                                 }
                             }
@@ -168,8 +158,8 @@ async def email(message: types.Message, state: FSMContext):
                                 "properties": {
                                     "title": "Долги",
                                     "gridProperties": {
-                                        "rowCount": 20,
-                                        "columnCount": 12
+                                        "rowCount": 100,
+                                        "columnCount": 20
                                     }
                                 }
                             }
@@ -188,8 +178,8 @@ async def email(message: types.Message, state: FSMContext):
                                 "properties": {
                                     "title": "Бюджеты",
                                     "gridProperties": {
-                                        "rowCount": 20,
-                                        "columnCount": 12
+                                        "rowCount": 100,
+                                        "columnCount": 20
                                     }
                                 }
                             }
@@ -208,8 +198,8 @@ async def email(message: types.Message, state: FSMContext):
                                 "properties": {
                                     "title": "Источники",
                                     "gridProperties": {
-                                        "rowCount": 20,
-                                        "columnCount": 12
+                                        "rowCount": 100,
+                                        "columnCount": 20
                                     }
                                 }
                             }
@@ -228,8 +218,8 @@ async def email(message: types.Message, state: FSMContext):
                                 "properties": {
                                     "title": "Категории",
                                     "gridProperties": {
-                                        "rowCount": 20,
-                                        "columnCount": 12
+                                        "rowCount": 100,
+                                        "columnCount": 20
                                     }
                                 }
                             }
@@ -243,7 +233,15 @@ async def email(message: types.Message, state: FSMContext):
             for sheet in sheetList:
                 print(sheet['properties']['sheetId'], sheet['properties']['title'])
 
-            sheetId = sheetList[0]['properties']['sheetId']
+            sheetId_Svodka = sheetList[0]['properties']['sheetId']
+            sheetId_Statistika = sheetList[1]['properties']['sheetId']
+            sheetId_Graph = sheetList[2]['properties']['sheetId']
+            sheetId_rashod = sheetList[3]['properties']['sheetId']
+            sheetId_dohod= sheetList[4]['properties']['sheetId']
+            sheetId_dolg = sheetList[5]['properties']['sheetId']
+            sheetId_budjet = sheetList[6]['properties']['sheetId']
+            sheetId_istochniki= sheetList[7]['properties']['sheetId']
+            sheetId_kategorii = sheetList[8]['properties']['sheetId']
 
 
             # Расходы заполняем ячейки
@@ -303,10 +301,14 @@ async def email(message: types.Message, state: FSMContext):
                      "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                      "values": [
                          #заполняем строки
-                         ["ID", "Вкл", "Основной","Наименование","Лимит","Период", "Синонимы"],  # Заполняем первую строку
+                         ["ID", "Вкл", "Основной","Наименование","Лимит","Период", "Синонимы"],
+                         ["","1","1","Ежемесячные расходы","","Месяц",""],
+                         ["","1","0","Годовые расходы","","Год","годовые, годовой, год"],
+                         ["", "1","0", "Внебюджет", "", "Год", "вне"]
                      ]}
                 ]
             }).execute()
+
 
 
 
@@ -320,34 +322,136 @@ async def email(message: types.Message, state: FSMContext):
                      "values": [
                          #заполняем строки
                          ["ID", "Вкл", "Основной","Наименование","Синонимы","Начальное значение"],  # Заполняем первую строку
-                         ["", "", "","","",""]  # Заполняем вторую строку
+                         ["", "1", "0","Карта","виза, visa, кард, кредитка, сбербанк, сбер, втб, альфа, сити","0"]  # Заполняем вторую строку
                      ]}
-                ]
-            }).execute()
+                ],
 
+
+            }).execute()
 
             #Категории заполняем ячейки
             results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
-                    {"range": "Категории!A1:G20",
+                    {"range": "Категории!A1:G50",
                      "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                      "values": [
                          #заполняем строки
-
                          ["ID", "Вкл", "Отображать в расходах","Отображать в доходах","Отображать в долгах","Наименование","Синонимы"],  # Заполняем первую строку
-                         ["", "", "","","",""]  # Заполняем вторую строку
+                         ["", "1", "1","0","0","Автомобиль", "авто, машина, бенз, бензин, гараж, стоянка, осаго, то"],  # Заполняем 2 строку
+                         ["", "1", "1", "0", "0", "Активный отдых","велосипед, лыжи, сноуборд"],  # Заполняем 3 строку
+                         ["", "1", "1", "0", "0", "Алкоголь","спиртное, пиво, вино, водка, коньяк"],  # Заполняем 4 строку
+                         ["", "1", "1", "0", "0", "Благотворительность",""],  # Заполняем 5 строку
+                         ["", "1", "1", "0", "0", "Девушка","девушка"],  # Заполняем 6 строку
+                         ["", "1", "1", "0", "0", "Дети","ребенок, сын, доч, сад, садик, школа"],  # Заполняем 7 строку
+                         ["", "1", "1", "0", "0", "Еда вне дома","обед, ланч, кфс, kfc, мак, макдак, макфак, кофе"],  # Заполняем 8 строку
+                         ["", "1", "1", "0", "0", "Здоровье","аптека, больница, поликлиника, стоматолог, зубной, врач, баня"],  # Заполняем 9 строку
+                         ["", "1", "1", "0", "0", "Квартира","кварплата, газ, свет, домофон"],  # Заполняем 10 строку
+                         ["", "1", "1", "0", "0", "Красота","прическа, стрижка, парикмахер, парикмахерская, макияж, визаж, ногти, маникюр, педикюр"],  # Заполняем 11 строку
+                         ["", "1", "1", "0", "0", "Курение","табак, сигареты, кальян, курево, электронка"],  # Заполняем 12 строку
+                         ["", "1", "1", "0", "0", "Неразобранное",""],  # Заполняем 13 строку
+                         ["", "1", "1", "0", "0", "Образование","книги, английский, репетитор"],  # Заполняем 14 строку
+                         ["", "1", "1", "0", "0", "Одежда","обувь"],  # Заполняем 15 строку
+                         ["", "1", "1", "0", "0", "Подарки", "подарок, день рождения, др, цветы"], # Заполняем 16 строку
+                         ["", "1", "1", "0", "0", "Покупки", ""], # Заполняем 17 строку
+                         ["", "1", "1", "0", "0", "Продукты", "питание, еда, хавчик, хлеб, мороженое, вода, сок, арбуз"], # Заполняем 18 строку
+                         ["", "1", "1", "0", "0", "Промтовары", "гигиена, быт"], # Заполняем 19 строку
+                         ["", "1", "1", "0", "0", "Прочее", "другое"], # Заполняем 20 строку
+                         ["", "1", "1", "0", "0", "Путешествия", "тур, самолет, авиа"], # Заполняем 21 строку
+                         ["", "1", "1", "0", "0", "Работа", "ооо, ип"], # Заполняем 22 строку
+                         ["", "1", "1", "0", "0", "Развлечения", "кафе, ресторан, бар, паб, клуб, кино"], # Заполняем 23 строку
+                         ["", "1", "1", "0", "0", "Связь", "телефон, интернет, мобильный, мегафон, мтс, билайн, теле2"],  # Заполняем 24 строку
+                         ["", "1", "1", "0", "0", "Семья", "жена, муж"],  # Заполняем 25 строку
+                         ["", "1", "1", "0", "0", "Спорт", "танцы, фитнес, зал"],  # Заполняем 26 строку
+                         ["", "1", "1", "0", "0", "Транспорт", "проезд, такси, переправа, дорога, метро, автобус, трамвай, троллейбус, подорожник, маршрутка"],  # Заполняем 27 строку
+                         ["", "1", "0", "1", "0", "Зарплата", "зарплата, зп, оклад, аванс"],  # Заполняем 28 строку
+                         ["", "1", "0", "0", "1", "Мне должны", "долг, должник, мне должны, должны"],  # Заполняем 29 строку
+                         ["", "1", "0", "0", "1", "Я должен", "кредит, я должен, должен"],  #  Заполняем 30 строку
                      ]}
                 ]
             }).execute()
-
-
-
-
-
-
-
+            #задаем размеры таблиц
+            results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheetId, body={
+                "requests": [
+                    #Таблица Категории размер.
+                    # Задать ширину столбца A: 20 пикселей
+                    {
+                        "updateDimensionProperties": {
+                            "range": {
+                                "sheetId": sheetId_kategorii,
+                                "dimension": "COLUMNS",  # Задаем ширину колонки
+                                "startIndex": 0,  # Нумерация начинается с нуля
+                                "endIndex": 1  # Со столбца номер startIndex по endIndex - 1 (endIndex не входит!)
+                            },
+                            "properties": {
+                                "pixelSize": 70  # Ширина в пикселях
+                            },
+                            "fields": "pixelSize"  # Указываем, что нужно использовать параметр pixelSize
+                        }
+                    },
+                    # Задать ширину столбцов B: 70 пикселей
+                    {
+                        "updateDimensionProperties": {
+                            "range": {
+                                "sheetId": sheetId_kategorii,
+                                "dimension": "COLUMNS",
+                                "startIndex": 1,
+                                "endIndex": 2
+                            },
+                            "properties": {
+                                "pixelSize": 70
+                            },
+                            "fields": "pixelSize"
+                        }
+                    },
+                    # Задать ширину столбцов C D и E : 150 пикселей
+                    {
+                        "updateDimensionProperties": {
+                            "range": {
+                                "sheetId": sheetId_kategorii,
+                                "dimension": "COLUMNS",
+                                "startIndex": 2,
+                                "endIndex": 5
+                            },
+                            "properties": {
+                                "pixelSize": 150
+                            },
+                            "fields": "pixelSize"
+                        }
+                    },
+                    # Задать ширину столбца F: 200 пикселей
+                    {
+                        "updateDimensionProperties": {
+                            "range": {
+                                "sheetId": sheetId_kategorii,
+                                "dimension": "COLUMNS",
+                                "startIndex": 5,
+                                "endIndex": 6
+                            },
+                            "properties": {
+                                "pixelSize": 200
+                            },
+                            "fields": "pixelSize"
+                        }
+                    },
+                    # Задать ширину столбца G: 200 пикселей
+                    {
+                        "updateDimensionProperties": {
+                            "range": {
+                                "sheetId": sheetId_kategorii,
+                                "dimension": "COLUMNS",
+                                "startIndex": 6,
+                                "endIndex": 7
+                            },
+                            "properties": {
+                                "pixelSize": 600
+                            },
+                            "fields": "pixelSize"
+                        }
+                    }
+                ]
+            }).execute()
             await bot.send_message(message.from_user.id, 'ШАГ 2/3.Введите город в котором вы проживаете')
             break
         else:
@@ -356,7 +460,6 @@ async def email(message: types.Message, state: FSMContext):
                                    f'Шаг 1/3.Укажите электронную почту(только @gmail.com).К\n'
                                    f'ящику будет привязана google-таблица с Вашими финансами')
             break
-
 
 # регистрация пользователя этап второй
 @dp.message_handler(state=registration.waiting_for_sity, content_types=types.ContentTypes.TEXT)
@@ -371,7 +474,6 @@ async def email(message: types.Message, state: FSMContext):
     await registration.next()
     await bot.send_message(message.from_user.id, f'ШАГ 3/3. Укажите лимит ежемесячных расходов.')
 
-
 # регистрация пользователя этап третий (ввод бюджета)
 @dp.message_handler(state=registration.waiting_for_budjet, content_types=types.ContentTypes.TEXT)
 async def email(message: types.Message, state: FSMContext):
@@ -379,14 +481,15 @@ async def email(message: types.Message, state: FSMContext):
         # сохраняю бюджет который вводит пользователь
         await state.update_data(budjet=message.text)
         user_data = await state.get_data()
-        global budjet
         budjet = {user_data['budjet']}
         print({user_data['budjet']})
+
         await bot.send_message(message.from_user.id, f'Поздравляем!Вы успешно зарегестрированны в Greenz.')
         await bot.send_message(message.from_user.id, f'Теперь вы можете отправлять доходы и расходы нашему'
                                                      f' боту.Cправка по работе с ботом - /help.Все записи заносятся в'
                                                      f'google-таблицу(подробная справка внутри таблицы).Ссылка на таблицу - /table')
         await bot.send_message(message.from_user.id, 'Примеры сообщений для бота - команда /samples.')
+
         await state.finish()
         return
 
@@ -396,11 +499,6 @@ async def email(message: types.Message, state: FSMContext):
 async def table(message: types.Message):
     await bot.send_message(message.from_user.id, "Ваша ссылка: ")
     await bot.send_message(message.from_user.id, link)
-
-
-
-
-
 # команда help
 @dp.message_handler(commands="help", state="*")
 async def help_text(message: types.Message):
@@ -428,7 +526,7 @@ async def btn_balance(message: types.Message):
                         f'годовой".')
 #нажатие на кнопку отчет(информация по отчетам)
 @dp.message_handler(Text(equals=["2.Отчеты"]))
-async def btn_balance(message: types.Message):
+async def btn_otchet(message: types.Message):
     await bot.send_message(message.from_user.id,f'Отчеты\n\n'
                         f'Внутри бота доступен только отчет по балансу — команда\n'
                         f'/balance.\n\n'
@@ -437,7 +535,7 @@ async def btn_balance(message: types.Message):
                         f'/table')
 #нажатие на кнопку расходы(информация по расходам)
 @dp.message_handler(Text(equals=["3.Расходы"]))
-async def btn_balance(message: types.Message):
+async def btn_rashod(message: types.Message):
     await bot.send_message(message.from_user.id,f'Расходы\n\n'
                         f'Отправляйте боту простые сообщения о Ваших расходах —\n'
                         f'"продукты 877".\n\n'
@@ -450,7 +548,7 @@ async def btn_balance(message: types.Message):
                         f'с ботом — команда /samples.')
 #нажатие на кнопку доходы(информация по доходам)
 @dp.message_handler(Text(equals=["4.Доходы"]))
-async def btn_balance(message: types.Message):
+async def btn_dohod(message: types.Message):
     await bot.send_message(message.from_user.id,f'Доходы\n\n'
                         f'Отправляйте боту простые сообщения о Ваших доходах —\n'
                         f'"доход 15000 аренда" или "зарплата 35000".\n\n'
@@ -465,7 +563,7 @@ async def btn_balance(message: types.Message):
                         f'ботом — команда /samples.')
 #нажатие на кнопку бюджеты(информация по бюджетам)
 @dp.message_handler(Text(equals=["5.Бюджеты"]))
-async def btn_balance(message: types.Message):
+async def btn_budjet(message: types.Message):
     await bot.send_message(message.from_user.id,f'Бюджеты\n\n'
                         f'Бюджеты разделяют ваши Расходы чтобы их проще было\n'
                         f'контролировать.\n\n'
@@ -483,7 +581,7 @@ async def btn_balance(message: types.Message):
                         f'синхронизировать её с ботом командой /sync.')
 #нажатие на кнопку источники(информация по источникам)
 @dp.message_handler(Text(equals=["6.Источники"]))
-async def btn_balance(message: types.Message):
+async def btn_istochniki(message: types.Message):
     await bot.send_message(message.from_user.id,f'Источники\n\n'
                         f'Источники — это наличные, кредитные и дебитовые карты и т.п.\n\n'
                         f'Разделяйте расходы и доходы по источникам, если это важно\n'
@@ -497,7 +595,7 @@ async def btn_balance(message: types.Message):
                         f'синхронизировать её с ботом командой /sync.')
 #нажатие на кнопку категории(информация о категориях)
 @dp.message_handler(Text(equals=["7.Категории"]))
-async def btn_balance(message: types.Message):
+async def btn_kategorii(message: types.Message):
     await bot.send_message(message.from_user.id,f'Категории\n\n'
                         f'Категории — основные типы расходов для удобства их\n'
                         f'подсчета и анализа:квартира, продукты и автомобиль и т.д.\n'
@@ -513,7 +611,7 @@ async def btn_balance(message: types.Message):
                         f'не забывайте синхронизировать её с ботом командой /sync.')
 #нажатие на кнопку google-таблица(информация по google-таблице)
 @dp.message_handler(Text(equals=["8.Google-таблица"]))
-async def btn_balance(message: types.Message):
+async def btn_google_table(message: types.Message):
     await bot.send_message(message.from_user.id,f'Google-таблица\n\n'
                         f'Таблица в Google позволяет увидеть наглядные отчеты или\n'
                         f'вносить изменения,минуя бота.Смотрите на таблицуне реже 1\n'
@@ -525,8 +623,6 @@ async def btn_balance(message: types.Message):
                         f'синонимы \n'
                         f'Ссылка на таблицу доступная по команде /table.".\n\n'
                         f'Cправка по таблице — https://www.greenzbot.ru/help\n')
-
-
 #комана /samples
 @dp.message_handler(commands="samples", state="*")
 async def samples_command(message: types.Message):
@@ -560,20 +656,22 @@ async def samples_command(message: types.Message):
 @dp.message_handler(commands="settings", state="*")
 async def samples_command(message: types.Message):
     await bot.send_message(message.from_user.id,f'Выберите настройки, которые хотите поменять:',reply_markup=greet_settings)
-
 #нажатие на кнопку Город
 @dp.message_handler(Text(equals=["1. Город"]))
 async def btn_balance(message: types.Message):
     await bot.send_message(message.from_user.id,f'Текущий город:"{sity}". Укажите новый город:')
     new_sity = sity
-
-
-
-
 #нажатие на кнопку Время напоминания
 @dp.message_handler(Text(equals=["2. Время напоминания"]))
 async def btn_balance(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Укажите час, в котором присылать уведомления:')
+    await bot.send_message(message.from_user.id,f'Укажите час, в котором присылать уведомления:',reply_markup=greet_time)
+    @dp.message_handler(Text(equals=["00"]))
+    async def btn_google_table(message: types.Message):
+        pass
+        await bot.send_message(message.from_user.id,f'Укажите минуты для уведомлений:',reply_markup=greet_minuts)
+        pass
+
+
 # запуск телеграм бота
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
