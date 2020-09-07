@@ -23,13 +23,14 @@ class registration(StatesGroup):
     waiting_for_gmail = State()
     waiting_for_sity = State()
     waiting_for_budjet = State()
+    waiting_for_new_data = State()
 # команда start
 @dp.message_handler(commands="start", state="*")
 async def start(message: types.Message):
-    await bot.send_message(message.from_user.id,
-                           f'{message.from_user.first_name},для работы необходимо зарегестрироваться.\nЭто займет пару минут.\n\n' \
-                           + 'Шаг 1/3.Укажите электронную почту(только @gmail.com).К ящику будет привязана google-таблица с Вашими финансами')
-    await registration.waiting_for_gmail.set()
+            await bot.send_message(message.from_user.id,
+                                f'{message.from_user.first_name},для работы необходимо зарегестрироваться.\nЭто займет пару минут.\n\n' \
+                                + 'Шаг 1/3.Укажите электронную почту(только @gmail.com).К ящику будет привязана google-таблица с Вашими финансами')
+            await registration.waiting_for_gmail.set()
 # регистрация пользователя этап первый
 @dp.message_handler(state=registration.waiting_for_gmail, content_types=types.ContentTypes.TEXT)
 async def email(message: types.Message, state: FSMContext):
@@ -56,6 +57,8 @@ async def email(message: types.Message, state: FSMContext):
             }).execute()
             await bot.send_message(message.from_user.id,"Создание таблицы....")
             spreadsheetId = spreadsheet['spreadsheetId']  # сохраняем идентификатор файла
+            print("Great spreadsheetId is: " + spreadsheetId)
+            await state.update_data(spreedsheetidofuser=spreadsheetId)
             #сохраняю ссылку на таблицу
             global link
             link = 'https://docs.google.com/spreadsheets/d/' + spreadsheetId
@@ -468,6 +471,7 @@ async def email(message: types.Message, state: FSMContext):
     await state.update_data(sity=message.text)
     user_data = await state.get_data()
     print({user_data['sity']})
+    print('User spreedsheet id is: ' + str({user_data['spreedsheetidofuser']}))
     global sity
     sity = {user_data['sity']}
     print(sity)
@@ -481,8 +485,12 @@ async def email(message: types.Message, state: FSMContext):
         # сохраняю бюджет который вводит пользователь
         await state.update_data(budjet=message.text)
         user_data = await state.get_data()
-        budjet = {user_data['budjet']}
-        print({user_data['budjet']})
+        budjet = f"{user_data['budjet']}    "
+        spreadsheetId_of_user = f"{user_data['spreedsheetidofuser']}"
+        print(spreadsheetId_of_user)
+        #print({user_data['budjet']})
+        print(budjet)
+
 
         await bot.send_message(message.from_user.id, f'Поздравляем!Вы успешно зарегестрированны в Greenz.')
         await bot.send_message(message.from_user.id, f'Теперь вы можете отправлять доходы и расходы нашему'
@@ -490,19 +498,35 @@ async def email(message: types.Message, state: FSMContext):
                                                      f'google-таблицу(подробная справка внутри таблицы).Ссылка на таблицу - /table')
         await bot.send_message(message.from_user.id, 'Примеры сообщений для бота - команда /samples.')
 
-        await state.finish()
+        # Записываем сразу в таблицу месячный бюджет пользователя
+        results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+                "valueInputOption": "USER_ENTERED",
+                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                "data": [
+                    {"range": "Бюджеты!A1:G20",
+                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                     "values": [
+                         #заполняем строки
+                         ["ID", "Вкл", "Основной","Наименование","Лимит","Период", "Синонимы"],
+                         ["","1","1","Ежемесячные расходы", budjet,"Месяц",""],
+                         ["","1","0","Годовые расходы","","Год","годовые, годовой, год"],
+                         ["", "1","0", "Внебюджет", "", "Год", "вне"]
+                     ]}
+                ]
+            }).execute()
+
+
+        await registration.next()
         return
 
-
-# команда table
-@dp.message_handler(commands="table", state="*")
-async def table(message: types.Message):
-    await bot.send_message(message.from_user.id, "Ваша ссылка: ")
-    await bot.send_message(message.from_user.id, link)
-# команда help
-@dp.message_handler(commands="help", state="*")
-async def help_text(message: types.Message):
-    await bot.send_message(message.from_user.id, f'Cправка\n\n'
+# Обработчик любых текстовых сообщений
+@dp.message_handler(state=registration.waiting_for_new_data, content_types=types.ContentTypes.TEXT)
+async def getDataStep(message: types.Message, state: FSMContext):
+    if message.text == "/table":
+        await bot.send_message(message.from_user.id, "Ваша ссылка: ")
+        await bot.send_message(message.from_user.id, link)
+    elif message.text == "/help":
+        await bot.send_message(message.from_user.id, f'Cправка\n\n'
                                                  f'/balance — Мой баланс\n'
                                                  f'/table — Cсылка на google-таблицу\n'
                                                  f'/sync — Синхронизация бота c google-таблицей\n'
@@ -512,10 +536,8 @@ async def help_text(message: types.Message):
                                                  f'Выберите интересующий раздел справки и получите краткую'
                                                  f'помощь. Если ваш вопрос не решен, то обратитесь за помощью'
                                                  f'к живому оператору @greenzapp.', reply_markup=greet_kb)
-#Нажатие на кнопку баланс(информация по балансу)
-@dp.message_handler(Text(equals=["1.Баланс"]))
-async def btn_balance(message: types.Message):
-    await bot.send_message(message.from_user.id,f"Баланс\n\n"
+    elif message.text == "1.Баланс":
+        await bot.send_message(message.from_user.id,f"Баланс\n\n"
                         f'Баланс — это маскимальная сумма расходов на сегодня.\n\n'
                         f'Баланс положительный - спокойно тратьте указанную сумму,\n'
                         f'отрицательный — отложите расходы, иначе не уложитесь в\n'
@@ -524,19 +546,15 @@ async def btn_balance(message: types.Message):
                         f'Добавьте к слову "баланс" название или синоним другого\n'
                         f'бюджета,чтобы проверить его баланс.Например,"баланс\n'
                         f'годовой".')
-#нажатие на кнопку отчет(информация по отчетам)
-@dp.message_handler(Text(equals=["2.Отчеты"]))
-async def btn_otchet(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Отчеты\n\n'
+    elif message.text == "2.Отчеты":
+        await bot.send_message(message.from_user.id,f'Отчеты\n\n'
                         f'Внутри бота доступен только отчет по балансу — команда\n'
                         f'/balance.\n\n'
                         f'Статистику по месяцам,категориям расходов, а также\n'
                         f'графические отчеты доступны в google-таблице — команда\n'
                         f'/table')
-#нажатие на кнопку расходы(информация по расходам)
-@dp.message_handler(Text(equals=["3.Расходы"]))
-async def btn_rashod(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Расходы\n\n'
+    elif message.text == "3.Расходы":
+        await bot.send_message(message.from_user.id,f'Расходы\n\n'
                         f'Отправляйте боту простые сообщения о Ваших расходах —\n'
                         f'"продукты 877".\n\n'
                         f'В сообщении обязательно укажите категорию и потраченную\n'
@@ -546,10 +564,8 @@ async def btn_rashod(message: types.Message):
                         f'Позже Вы сможете изменить или удалить их из таблицы.\n\n'
                         f'Изучите примеры сообщений, чтобы понять как общаться\n'
                         f'с ботом — команда /samples.')
-#нажатие на кнопку доходы(информация по доходам)
-@dp.message_handler(Text(equals=["4.Доходы"]))
-async def btn_dohod(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Доходы\n\n'
+    elif message.text == "4.Доходы":
+        await bot.send_message(message.from_user.id,f'Доходы\n\n'
                         f'Отправляйте боту простые сообщения о Ваших доходах —\n'
                         f'"доход 15000 аренда" или "зарплата 35000".\n\n'
                         f'Создайте отдельные категории только для доходов,указав в\n'
@@ -561,10 +577,8 @@ async def btn_dohod(message: types.Message):
                         f'Позже Вы сможете изменить или удалить их из таблицы.\n\n'
                         f'Изучите примеры сообщенией, чтобы понять как общаться с\n'
                         f'ботом — команда /samples.')
-#нажатие на кнопку бюджеты(информация по бюджетам)
-@dp.message_handler(Text(equals=["5.Бюджеты"]))
-async def btn_budjet(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Бюджеты\n\n'
+    elif message.text == "5.Бюджеты":
+        await bot.send_message(message.from_user.id,f'Бюджеты\n\n'
                         f'Бюджеты разделяют ваши Расходы чтобы их проще было\n'
                         f'контролировать.\n\n'
                         f'Бюджет обязательно привязан к периоду:неделя,месяц или\n'
@@ -579,10 +593,8 @@ async def btn_budjet(message: types.Message):
                         f'в google-таблицу /table.\n\n'
                         f'После изменения google-таблицы не забывайте\n'
                         f'синхронизировать её с ботом командой /sync.')
-#нажатие на кнопку источники(информация по источникам)
-@dp.message_handler(Text(equals=["6.Источники"]))
-async def btn_istochniki(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Источники\n\n'
+    elif message.text == "6.Источники":
+        await bot.send_message(message.from_user.id,f'Источники\n\n'
                         f'Источники — это наличные, кредитные и дебитовые карты и т.п.\n\n'
                         f'Разделяйте расходы и доходы по источникам, если это важно\n'
                         f'для Вас.\n'
@@ -593,10 +605,8 @@ async def btn_istochniki(message: types.Message):
                         f'/table.\n\n'
                         f'После изменения google-таблицы не забывайте\n'
                         f'синхронизировать её с ботом командой /sync.')
-#нажатие на кнопку категории(информация о категориях)
-@dp.message_handler(Text(equals=["7.Категории"]))
-async def btn_kategorii(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Категории\n\n'
+    elif message.text == "7.Категории":
+        await bot.send_message(message.from_user.id,f'Категории\n\n'
                         f'Категории — основные типы расходов для удобства их\n'
                         f'подсчета и анализа:квартира, продукты и автомобиль и т.д.\n'
                         f'Для доходов и долгов есть свои категории\n\n'
@@ -609,10 +619,8 @@ async def btn_kategorii(message: types.Message):
                         f'Изменять синонимы можно самостоятельно, для этого\n'
                         f'перейдите в google-таблицу /table. После изменения таблицы\n'
                         f'не забывайте синхронизировать её с ботом командой /sync.')
-#нажатие на кнопку google-таблица(информация по google-таблице)
-@dp.message_handler(Text(equals=["8.Google-таблица"]))
-async def btn_google_table(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Google-таблица\n\n'
+    elif message.text == "8.Google-таблица":
+        await bot.send_message(message.from_user.id,f'Google-таблица\n\n'
                         f'Таблица в Google позволяет увидеть наглядные отчеты или\n'
                         f'вносить изменения,минуя бота.Смотрите на таблицуне реже 1\n'
                         f'раза в неделю,чтобы иметь наглядное представление о \n'
@@ -623,10 +631,8 @@ async def btn_google_table(message: types.Message):
                         f'синонимы \n'
                         f'Ссылка на таблицу доступная по команде /table.".\n\n'
                         f'Cправка по таблице — https://www.greenzbot.ru/help\n')
-#комана /samples
-@dp.message_handler(commands="samples", state="*")
-async def samples_command(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Примеры сообщений для бота:\n\n'
+    elif message.text == "/samples":
+        await bot.send_message(message.from_user.id,f'Примеры сообщений для бота:\n\n'
                         f'“продукты 750”\n'
                         f'По умолчанию запись вносится на сегодня, в расходы/\n'
                         f'доходы/долги, в зависимости от настроек категории в\n'
@@ -652,39 +658,186 @@ async def samples_command(message: types.Message):
                         f'Для доходов работают те же правила.\n\n'
                         f'“25.08 дал в долг сестре 15000”\n'
                         f'И для долгов тоже.')
-#команда settings
-@dp.message_handler(commands="settings", state="*")
-async def samples_command(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Выберите настройки, которые хотите поменять:',reply_markup=greet_settings)
-#нажатие на кнопку Город
-@dp.message_handler(Text(equals=["1. Город"]))
-async def btn_balance(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Текущий город:"{sity}". Укажите новый город:')
-    new_sity = sity
+    elif message.text == "/settings":
+        await bot.send_message(message.from_user.id,f'Выберите настройки, которые хотите поменять:',reply_markup=greet_settings)
+    elif message.text == "1. Город":
+        await bot.send_message(message.from_user.id,f'Текущий город:"{sity}". Укажите новый город:')
+    elif message.text == "2. Время напоминания":
+        await bot.send_message(message.from_user.id,f'Укажите час, в котором присылать уведомления:',reply_markup=greet_time)
+
+    else:
+        #await bot.send_message(message.from_user.id, "Это обычное сообщение")
+
+        # Обозначаем слова, которые отвечают за доход и за расход
+        dohod_sinonims = 'работа, бизнес, продажа бизнеса'
+        rashod_sinonims = 'девушка, бензин, машина'
+        v_dolg_sinonims = 'дал в долг, отдал в долг, закинул в долг'
+        kratko_dni_sinonims = 'пн, вт, ср, чт, пт, сб, вс'
+        kratko_month_sinonims = 'сен, окт, дек, нояб, фев, март, апр, май, июнь, июль, авг, янв'
+
+        # Получаемое сообщение на разбор.
+        find_word = message.text
+
+        # Выводим значения
+        date_global_full = ''
+        category_global = ''
+        kuda_global = ''
+        prim_global = ''
+        summa_global = 0
+        mesyac_global = ''
+        den_global = ''
+
+        # Разбираем искомую фразы через пробел на слова.
+        find_word_fraze = find_word.split(' ')
+        print('Разобранная фраза на слова: ' + str(find_word_fraze))
+
+        # Делим строку синонимов, чтобы проверить это в доход, в расход, в долг или не в разобранное.
+        sort_dohod_sinonims = dohod_sinonims.split(', ')
+        print('Делим слова через запятую: ' + str(sort_dohod_sinonims))
+
+        sort_rashod_sinonims = rashod_sinonims.split(', ')
+
+        sort_v_dolg_sinonims = v_dolg_sinonims.split(', ')
+
+        sort_dni_sinonims = kratko_dni_sinonims.split(', ')
+
+        sort_month_sinonims = kratko_month_sinonims.split(', ')
+
+        # Начинаем проверять каждое слово в листе через проверки на схожесть ключевых слов.
+        for element in range(0,len(find_word_fraze)):
+            print(str(find_word_fraze[element]))
+
+            # Проверяем, если число от 1 до 31, ищем месяц и записываем в дату
+            if find_word_fraze[element].isalpha() == False:
+                if int(find_word_fraze[element]) > 0 and int(find_word_fraze[element]) < 32:
+                    if sort_month_sinonims.count(find_word_fraze[element+1])>0:
+                        date = find_word_fraze[element] + '.' + find_word_fraze[element+1]
+                        print ('Eto data: ' + date)
+                        date_global_full = str(date)
+                        den_global = str(find_word_fraze[element])
+                        continue
+
+        # Проверяем ключевое слово на месяца, чтобы записывать дату месяца ( потом должен быть поиск дня этого месяца, ПЕРЕД месяцом?)
+            if sort_month_sinonims.count(find_word_fraze[element])>0:
+                print('Eto mesyac: ' + str(find_word_fraze[element]))
+                mesyac_global = str(find_word_fraze[element])
+                continue
+
+
+        # Проверяем число ли данный элемент, чтобы вытянуть сумму. 
+            if find_word_fraze[element].isalpha() == False:
+                print('Eto chisla')
+                # Проверяем, если в этом числах точка и размер из 5 символов в элементе
+                if find_word_fraze[element].count('.') and len(find_word_fraze[element]) == 5:
+                    print('Eto den i mesyac')
+                    date_global_full = find_word_fraze[element] 
+                else: 
+                    summa_global = find_word_fraze[element]
+                continue
+
+            # Проверяем ключевое ли слово дней это. 
+            if sort_dni_sinonims.count(find_word_fraze[element])>0:
+                print('Eto den: ' + str(find_word_fraze[element]))
+                den_global = find_word_fraze[element]
+                continue
+
+            # Проверяем ключевое слово вчера, чтобы записывать сразу дату с функционал этого ключевого слова.
+            if find_word_fraze[element] == 'вчера':
+                print('Eto bilo vchera!')
+                continue
+
+            # Проверяем ключевое слово позавчера, чтобы записывать сразу дату с функционал этого ключевого слова.
+            if find_word_fraze[element] == 'позавчера':
+                print('Eto bilo pozavchera!')
+                continue
+
+            # Проверяем есть ли такой синоним ( одно слово ) в доходах, расходах, долгах. 
+            if sort_dohod_sinonims.count(find_word_fraze[element])>0:
+                print('Eto dohod!')
+                kuda_global = 'Dohod'
+                category_global = find_word_fraze[element]
+                prim_global = str(find_word_fraze[element])
+                continue
+
+            elif sort_rashod_sinonims.count(find_word_fraze[element])>0:
+                print('Eto rashod')
+                kuda_global = 'Rashod'
+                category_global = find_word_fraze[element]
+                prim_global = str(find_word_fraze[element])
+                continue
+
+            elif sort_v_dolg_sinonims.count(find_word_fraze[element])>0:
+                print('Eto v dolg')
+                kuda_global = 'Dolg'
+                prim_global = str(find_word_fraze[element])
+                continue
+            else:
+                print('Ne razobral edinichn slovo(')
+                # Проверяем есть ли в строке ключевое слово длиной больше одного - доходы
+                for element in range(0,len(sort_dohod_sinonims)):
+                    if find_word.count(sort_dohod_sinonims[element]):
+                        print('Eto svyaska dohodov')
+                        kuda_global = 'Dohod_svyazka'
+                        break
+
+                # Проверяем есть ли в строке ключевое слово длиной больше одного - расходы
+                for element in range(0,len(sort_rashod_sinonims)):
+                    if find_word.count(sort_rashod_sinonims[element]):
+                        print('Eto svyaska rashodov')
+                        kuda_global = 'Rashod_svyazka'
+                        break
+
+                # Проверяем есть ли в строке ключевое слово длиной больше одного - долг
+                for element in range(0,len(sort_v_dolg_sinonims)):
+                    if find_word.count(sort_v_dolg_sinonims[element]):
+                        print('Eto svyaska kategorii dolg')
+                        kuda_global = 'Dolg_svyazka'
+                        break
+
+        if kuda_global == "Dohod":
+            await bot.send_message(message.from_user.id, "Записано в Ежемесячные доходы → " + category_global)
+        elif kuda_global == "Rashod":
+            await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы → " + category_global)
+        elif kuda_global == "Dolg":
+            await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
+        elif kuda_global == "Rashod_svyazka":
+            await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы")
+        elif kuda_global == "Dolg_svyazka":
+            await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
+        elif kuda_global == "Dohod_svyazka":
+            await bot.send_message(message.from_user.id, "Записано в Ежемесячные доходы")
+
+
+
+
+
+
+
+
 #нажатие на кнопку Время напоминания
-@dp.message_handler(Text(equals=["2. Время напоминания"]))
-async def btn_balance(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Укажите час, в котором присылать уведомления:',reply_markup=greet_time)
-    @dp.message_handler(Text(equals=["00"]))
-    async def btn_google_table(message: types.Message):
-        pass
-        await bot.send_message(message.from_user.id,f'Укажите минуты для уведомлений:',reply_markup=greet_minuts)
-        pass
+#@dp.message_handler(Text(equals=["2. Время напоминания"]))
+#async def btn_balance(message: types.Message):
+    #await bot.send_message(message.from_user.id,f'Укажите час, в котором присылать уведомления:',reply_markup=greet_time)
+    #@dp.message_handler(Text(equals=["00"]))
+    #async def btn_google_table(message: types.Message):
+        #pass
+        #await bot.send_message(message.from_user.id,f'Укажите минуты для уведомлений:',reply_markup=greet_minuts)
+        #pass
 
 #команда delete
-@dp.message_handler(commands="delete", state="*")
-async def samples_command(message: types.Message):
-    await bot.send_message(message.from_user.id,f'Вы действительно хотите удалить свой аккаунт?\n'
-                                                f'Файл на Гугл Диске сохранится.:',reply_markup=greet_delete)
+#@dp.message_handler(commands="delete", state="*")
+#async def samples_command(message: types.Message):
+    #await bot.send_message(message.from_user.id,f'Вы действительно хотите удалить свой аккаунт?\n'
+                                                #f'Файл на Гугл Диске сохранится.:',reply_markup=greet_delete)
 
     # нажатие на кнопку Да
-    @dp.message_handler(Text(equals=["Да"]))
-    async def delete_yes(message: types.Message):
-        pass
+    #@dp.message_handler(Text(equals=["Да"]))
+    #async def delete_yes(message: types.Message):
+        #pass
     # нажатие на кнопку Нет
-    @dp.message_handler(Text(equals=["Нет"]))
-    async def delete_no(message: types.Message):
-        await bot.send_message(message.from_user.id,f'Вы отменили удаление аккаунта.')
+    #@dp.message_handler(Text(equals=["Нет"]))
+    #async def delete_no(message: types.Message):
+        #await bot.send_message(message.from_user.id,f'Вы отменили удаление аккаунта.')
 # запуск телеграм бота
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
