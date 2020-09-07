@@ -29,7 +29,7 @@ gorod_btn
 )
 greet_settings.row(time_btn)
 
-
+#кнопки команда settings 2.Время напоминания
 time_00 = KeyboardButton("00",callback_data = '00')
 time_01 = KeyboardButton("01",callback_data = '01')
 time_02 = KeyboardButton("02",callback_data = '02')
@@ -56,9 +56,7 @@ time_22 = KeyboardButton("22",callback_data = '22')
 time_23= KeyboardButton("23",callback_data = '23')
 
 time_otmena = KeyboardButton("Отключить напоминания",callback_data = 'otmena')
-
-
-#кнопки команда settings 2.Время напоминания
+#подключение кнопок команды time
 greet_time = ReplyKeyboardMarkup(resize_keyboard=True,one_time_keyboard=True).row(
    time_00,time_01,time_02,time_03,time_04,time_05
 )
@@ -66,13 +64,19 @@ greet_time.row(time_06,time_07,time_08,time_09,time_10,time_11)
 greet_time.row(time_12,time_13,time_14,time_15,time_16,time_17)
 greet_time.row(time_18,time_19,time_20,time_21,time_22,time_23)
 greet_time.row(time_otmena)
-
-
-
 btn_minut_00 = KeyboardButton("00")
 btn_minut_15 = KeyboardButton("15")
 btn_minut_30 = KeyboardButton("30")
 btn_minut_45 = KeyboardButton("45")
 greet_minuts = ReplyKeyboardMarkup(resize_keyboard=True,one_time_keyboard=True).row(
    btn_minut_00,btn_minut_15,btn_minut_30,btn_minut_45
+)
+
+
+#кнопки команда delete
+btn_delete_yes = KeyboardButton("Да")
+btn_delete_no = KeyboardButton("Нет")
+
+greet_delete =  ReplyKeyboardMarkup(resize_keyboard=True,one_time_keyboard=True).row(
+    btn_delete_yes,btn_delete_no
 )
