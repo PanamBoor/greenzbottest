@@ -668,10 +668,51 @@ async def getDataStep(message: types.Message, state: FSMContext):
     else:
         #await bot.send_message(message.from_user.id, "Это обычное сообщение")
 
-        # Обозначаем слова, которые отвечают за доход и за расход
-        dohod_sinonims = 'работа, бизнес, продажа бизнеса'
-        rashod_sinonims = 'девушка, бензин, машина'
-        v_dolg_sinonims = 'дал в долг, отдал в долг, закинул в долг'
+
+        # Вытягиваем синонимы из таблицы
+        ranges = ["Категории!B2:G31"] # 
+        user_data = await state.get_data()
+        spreadsheetId_of_user = f"{user_data['spreedsheetidofuser']}"
+          
+        results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId_of_user, 
+                                                    ranges = ranges, 
+                                                    valueRenderOption = 'FORMATTED_VALUE',  
+                                                    dateTimeRenderOption = 'FORMATTED_STRING').execute() 
+        sheet_values = results['valueRanges'][0]['values']
+
+
+        dohod_sinonims = ''
+        rashod_sinonims = ''
+        v_dolg_sinonims = ''
+
+        # Пишем выборку, что добавить в сортировку синонимов
+        for element in sheet_values:
+            # Проверяем включена ли категория у элемента в таблице
+            #print(str(element))
+            if element[0] == "1":
+                # Делаем выбор, куда заносить синонимы
+                # Если это доход
+                if element[2] == "1":
+                    if len(element) == 6:
+                        dohod_sinonims = dohod_sinonims + ", " + element[5]
+                    continue
+                elif element[1] == "1":
+                    if len(element) == 6:
+                        rashod_sinonims = rashod_sinonims + ", " + element[5]
+                    continue
+                elif element[3] == "1":
+                    if len(element) == 6:
+                        v_dolg_sinonims = v_dolg_sinonims + ", " + element[5]
+                    continue
+                else:
+                    pass
+
+        # Обозначаем слова, которые отвечают за доход и за долг
+        #dohod_sinonims = 'работа, бизнес, продажа бизнеса'
+        #rashod_sinonims = 'девушка, бензин, машина'
+        #v_dolg_sinonims = 'дал в долг, отдал в долг, закинул в долг'
+
+        # Отмечаем дефолтные слова, которых обрабатывает бот
         kratko_dni_sinonims = 'пн, вт, ср, чт, пт, сб, вс'
         kratko_month_sinonims = 'сен, окт, дек, нояб, фев, март, апр, май, июнь, июль, авг, янв'
 
@@ -693,11 +734,13 @@ async def getDataStep(message: types.Message, state: FSMContext):
 
         # Делим строку синонимов, чтобы проверить это в доход, в расход, в долг или не в разобранное.
         sort_dohod_sinonims = dohod_sinonims.split(', ')
-        print('Делим слова через запятую: ' + str(sort_dohod_sinonims))
+        print(str(sort_dohod_sinonims))
 
         sort_rashod_sinonims = rashod_sinonims.split(', ')
+        print(str(sort_rashod_sinonims))
 
         sort_v_dolg_sinonims = v_dolg_sinonims.split(', ')
+        print(str(sort_v_dolg_sinonims))
 
         sort_dni_sinonims = kratko_dni_sinonims.split(', ')
 
@@ -774,25 +817,31 @@ async def getDataStep(message: types.Message, state: FSMContext):
             else:
                 print('Ne razobral edinichn slovo(')
                 # Проверяем есть ли в строке ключевое слово длиной больше одного - доходы
-                for element in range(0,len(sort_dohod_sinonims)):
-                    if find_word.count(sort_dohod_sinonims[element]):
-                        print('Eto svyaska dohodov')
-                        kuda_global = 'Dohod_svyazka'
-                        break
+                for sinonim in range(0,len(sort_dohod_sinonims)):
+                    if find_word.count(sort_dohod_sinonims[sinonim]):
+                        if sort_dohod_sinonims[sinonim] != "":
+                            print('Eto svyaska dohodov')
+                            kuda_global = 'Dohod_svyazka'
+                            break
 
                 # Проверяем есть ли в строке ключевое слово длиной больше одного - расходы
-                for element in range(0,len(sort_rashod_sinonims)):
-                    if find_word.count(sort_rashod_sinonims[element]):
-                        print('Eto svyaska rashodov')
-                        kuda_global = 'Rashod_svyazka'
-                        break
+                for sinonim2 in range(0,len(sort_rashod_sinonims)):
+                    if find_word.count(sort_rashod_sinonims[sinonim2]):
+                        if sort_rashod_sinonims[sinonim2] != "":
+                            print('Eto svyaska rashodov')
+                            kuda_global = 'Rashod_svyazka'
+                            break
 
                 # Проверяем есть ли в строке ключевое слово длиной больше одного - долг
-                for element in range(0,len(sort_v_dolg_sinonims)):
-                    if find_word.count(sort_v_dolg_sinonims[element]):
-                        print('Eto svyaska kategorii dolg')
-                        kuda_global = 'Dolg_svyazka'
-                        break
+                for sinonim3 in range(0,len(sort_v_dolg_sinonims)):
+                    if find_word.count(sort_v_dolg_sinonims[sinonim3]):
+                        if sort_v_dolg_sinonims[sinonim3] != "":
+                            print('Eto svyaska kategorii dolg')
+                            kuda_global = 'Dolg_svyazka'
+                            break
+                        else:
+                            print('Ne poluchilos razobrat: ' + find_word)
+                            kuda_global = 'Nerazobrano'
 
         if kuda_global == "Dohod":
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные доходы → " + category_global)
@@ -806,6 +855,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
         elif kuda_global == "Dohod_svyazka":
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные доходы")
+        elif kuda_global == 'Nerazobrano':
+            await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы → Неразобранное")
 
 
 
