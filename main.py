@@ -520,7 +520,7 @@ async def email(message: types.Message, state: FSMContext):
         return
 
 # Обработчик любых текстовых сообщений
-@dp.message_handler(state=registration.waiting_for_new_data, content_types=types.ContentTypes.TEXT)
+@dp.message_handler(state="*", content_types=types.ContentTypes.TEXT)
 async def getDataStep(message: types.Message, state: FSMContext):
     if message.text == "/table":
         await bot.send_message(message.from_user.id, "Ваша ссылка: ")
@@ -671,9 +671,10 @@ async def getDataStep(message: types.Message, state: FSMContext):
 
         # Вытягиваем синонимы из таблицы
         ranges = ["Категории!B2:G31"] # 
-        user_data = await state.get_data()
-        spreadsheetId_of_user = f"{user_data['spreedsheetidofuser']}"
-          
+        #user_data = await state.get_data()
+        #spreadsheetId_of_user = f"{user_data['spreedsheetidofuser']}"
+        spreadsheetId_of_user = "1VzlJtt-WJ_bHz3rAVOOe9C90Q1PvZ9vFvAuSX8ZWhJ0"
+
         results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId_of_user, 
                                                     ranges = ranges, 
                                                     valueRenderOption = 'FORMATTED_VALUE',  
@@ -844,18 +845,116 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             kuda_global = 'Nerazobrano'
 
         if kuda_global == "Dohod":
+            # Отправляем сообщение ботом
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные доходы → " + category_global)
+
+            # Добавляем запись в таблицу доходы
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+                "valueInputOption": "USER_ENTERED",
+                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                "data": [
+                    {"range": "Доходы!A3:F3",
+                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                     "values": [
+                         #заполняем строки
+                         ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                     ]}
+                ]
+            }).execute()
+
         elif kuda_global == "Rashod":
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы → " + category_global)
+
+            # Добавляем запись в таблицу расходы
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+                "valueInputOption": "USER_ENTERED",
+                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                "data": [
+                    {"range": "Расходы!A3:F3",
+                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                     "values": [
+                         #заполняем строки
+                         ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global]
+                     ]}
+                ]
+            }).execute()
         elif kuda_global == "Dolg":
             await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
+
+            # Добавляем запись в таблицу долги
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+                "valueInputOption": "USER_ENTERED",
+                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                "data": [
+                    {"range": "Долги!A3:F3",
+                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                     "values": [
+                         #заполняем строки
+                         ["1", date_global_full, category_global, str(summa_global), prim_global, "",],
+                     ]}
+                ]
+            }).execute()
         elif kuda_global == "Rashod_svyazka":
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы")
+
+            # Добавляем запись в таблицу расходы
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+                "valueInputOption": "USER_ENTERED",
+                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                "data": [
+                    {"range": "Расходы!A3:F3",
+                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                     "values": [
+                         #заполняем строки
+                         ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global]
+                     ]}
+                ]
+            }).execute()
         elif kuda_global == "Dolg_svyazka":
             await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
+
+            # Добавляем запись в таблицу долги
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+                "valueInputOption": "USER_ENTERED",
+                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                "data": [
+                    {"range": "Долги!A3:F3",
+                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                     "values": [
+                         #заполняем строки
+                         ["1", date_global_full, category_global, str(summa_global), prim_global, "",],
+                     ]}
+                ]
+            }).execute()
         elif kuda_global == "Dohod_svyazka":
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные доходы")
+            # Добавляем запись в таблицу доходы
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+                "valueInputOption": "USER_ENTERED",
+                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                "data": [
+                    {"range": "Доходы!A3:F3",
+                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                     "values": [
+                         #заполняем строки
+                         ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                     ]}
+                ]
+            }).execute()
         elif kuda_global == 'Nerazobrano':
+            # Добавляем запись в таблицу расходы
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+                "valueInputOption": "USER_ENTERED",
+                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                "data": [
+                    {"range": "Расходы!A3:F3",
+                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                     "values": [
+                         #заполняем строки
+                         ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global]
+                     ]}
+                ]
+            }).execute()
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы → Неразобранное")
 
 
