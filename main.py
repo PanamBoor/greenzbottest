@@ -9,6 +9,7 @@ from aiogram.dispatcher.filters import Command, Text
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from sqlite_db_worker import *
 memory_storage = MemoryStorage()
 # подключаем токен бота
 bot = Bot(token=BOT_TOKEN)
@@ -27,10 +28,15 @@ class registration(StatesGroup):
 # команда start
 @dp.message_handler(commands="start", state="*")
 async def start(message: types.Message):
-            await bot.send_message(message.from_user.id,
-                                f'{message.from_user.first_name},для работы необходимо зарегестрироваться.\nЭто займет пару минут.\n\n' \
-                                + 'Шаг 1/3.Укажите электронную почту(только @gmail.com).К ящику будет привязана google-таблица с Вашими финансами')
-            await registration.waiting_for_gmail.set()
+    # Проверка есть ли пользователь уже в базе?
+    if get_have_user_in_a_base(user_id=message.from_user.id) == 0:
+        await bot.send_message(message.from_user.id,
+                            f'{message.from_user.first_name},для работы необходимо зарегестрироваться.\nЭто займет пару минут.\n\n' \
+                            + 'Шаг 1/3.Укажите электронную почту(только @gmail.com).К ящику будет привязана google-таблица с Вашими финансами')
+        await registration.waiting_for_gmail.set()
+    else:
+        await bot.send_message(message.from_user.id, "Вы уже зарегистрированы!")
+
 # регистрация пользователя этап первый
 @dp.message_handler(state=registration.waiting_for_gmail, content_types=types.ContentTypes.TEXT)
 async def email(message: types.Message, state: FSMContext):
@@ -257,7 +263,6 @@ async def email(message: types.Message, state: FSMContext):
                      "values": [
                          #заполняем строки
                          ["ID", "Дата", "Бюджет","Источник","Категория","Сумма","Примечание"],  # Заполняем первую строку
-                         [message.from_user.id, "", "","","",""]  # Заполняем вторую строку
                      ]}
                 ]
             }).execute()
@@ -273,7 +278,6 @@ async def email(message: types.Message, state: FSMContext):
                      "values": [
                          #заполняем строки
                          ["ID", "Дата","Источник","Категория","Сумма","Примечание"],  # Заполняем первую строку
-                         [message.from_user.id, "", "","","",""]  # Заполняем вторую строку
                      ]}
                 ]
             }).execute()
@@ -289,7 +293,6 @@ async def email(message: types.Message, state: FSMContext):
                      "values": [
                          #заполняем строки
                          ["ID", "Дата открытия", "Категория","Сумма","Примечание","Дата закрытия"],  # Заполняем первую строку
-                         ["", "", "","","",""]  # Заполняем вторую строку
                      ]}
                 ]
             }).execute()
@@ -473,9 +476,11 @@ async def email(message: types.Message, state: FSMContext):
     print({user_data['sity']})
     print('User spreedsheet id is: ' + str({user_data['spreedsheetidofuser']}))
     global sity
-    sity = {user_data['sity']}
+    sity = f"{user_data['sity']}"
+    spreadsheetidofuser_format = f"{user_data['spreedsheetidofuser']}"
     print(sity)
     await registration.next()
+    add_new_user_to_base(user_id=message.from_user.id, spreedsheetid=spreadsheetidofuser_format, town=sity)
     await bot.send_message(message.from_user.id, f'ШАГ 3/3. Укажите лимит ежемесячных расходов.')
 
 # регистрация пользователя этап третий (ввод бюджета)
@@ -522,8 +527,10 @@ async def email(message: types.Message, state: FSMContext):
 # Обработчик любых текстовых сообщений
 @dp.message_handler(state="*", content_types=types.ContentTypes.TEXT)
 async def getDataStep(message: types.Message, state: FSMContext):
+    spreadsheetId = get_spreedsheetid_by_user_id(user_id=message.from_user.id)
     if message.text == "/table":
         await bot.send_message(message.from_user.id, "Ваша ссылка: ")
+        link = 'https://docs.google.com/spreadsheets/d/' + spreadsheetId
         await bot.send_message(message.from_user.id, link)
     elif message.text == "/help":
         await bot.send_message(message.from_user.id, f'Cправка\n\n'
@@ -673,9 +680,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
         ranges = ["Категории!B2:G31"] # 
         #user_data = await state.get_data()
         #spreadsheetId_of_user = f"{user_data['spreedsheetidofuser']}"
-        spreadsheetId_of_user = "1VzlJtt-WJ_bHz3rAVOOe9C90Q1PvZ9vFvAuSX8ZWhJ0"
 
-        results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId_of_user, 
+        results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId, 
                                                     ranges = ranges, 
                                                     valueRenderOption = 'FORMATTED_VALUE',  
                                                     dateTimeRenderOption = 'FORMATTED_STRING').execute() 
@@ -848,25 +854,49 @@ async def getDataStep(message: types.Message, state: FSMContext):
             # Отправляем сообщение ботом
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные доходы → " + category_global)
 
-            # Добавляем запись в таблицу доходы
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
-                "valueInputOption": "USER_ENTERED",
-                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
-                "data": [
-                    {"range": "Доходы!A3:F3",
-                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
-                     "values": [
-                         #заполняем строки
-                         ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global],
-                     ]}
-                ]
-            }).execute()
+            # Добавляем запись в базу данных
+            if get_have_user_any_message(user_id=message.from_user.id) == 0:
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="2", last_ind_rashod="2", last_ind_dolg="2")
+
+
+                # Добавляем запись в таблицу доходы
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": "Доходы!A2:F2",
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                        ]}
+                        ]
+                }).execute()
+            else:
+                index_to_add_dohod = int(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id))+1
+                new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg="2", last_ind_rashod="2")
+                # Добавляем запись в таблицу доходы
+                tablelist = "Доходы!A" + str(index_to_add_dohod) + ":F" + str(index_to_add_dohod)
+                print(str(tablelist))
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": tablelist,
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                        ]}
+                        ]
+                }).execute()
 
         elif kuda_global == "Rashod":
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы → " + category_global)
 
             # Добавляем запись в таблицу расходы
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
@@ -882,7 +912,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
 
             # Добавляем запись в таблицу долги
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
@@ -898,7 +928,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы")
 
             # Добавляем запись в таблицу расходы
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
@@ -914,7 +944,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
 
             # Добавляем запись в таблицу долги
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
@@ -929,7 +959,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
         elif kuda_global == "Dohod_svyazka":
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные доходы")
             # Добавляем запись в таблицу доходы
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
@@ -943,7 +973,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
             }).execute()
         elif kuda_global == 'Nerazobrano':
             # Добавляем запись в таблицу расходы
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId_of_user, body={
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
