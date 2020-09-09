@@ -724,7 +724,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
         kratko_month_sinonims = 'сен, окт, дек, нояб, фев, март, апр, май, июнь, июль, авг, янв'
 
         # Получаемое сообщение на разбор.
-        find_word = message.text
+        find_word = message.text.lower()
 
         # Выводим значения
         date_global_full = ''
@@ -856,7 +856,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
 
             # Добавляем запись в базу данных
             if get_have_user_any_message(user_id=message.from_user.id) == 0:
-                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="2", last_ind_rashod="2", last_ind_dolg="2")
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="2", last_ind_rashod="1", last_ind_dolg="1")
 
 
                 # Добавляем запись в таблицу доходы
@@ -874,8 +874,10 @@ async def getDataStep(message: types.Message, state: FSMContext):
                 }).execute()
             else:
                 index_to_add_dohod = int(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id))+1
+                index_to_add_rashod = int(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id))
+                index_to_add_dolg = int(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id))
                 new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
-                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg="2", last_ind_rashod="2")
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
                 # Добавляем запись в таблицу доходы
                 tablelist = "Доходы!A" + str(index_to_add_dohod) + ":F" + str(index_to_add_dohod)
                 print(str(tablelist))
@@ -895,96 +897,261 @@ async def getDataStep(message: types.Message, state: FSMContext):
         elif kuda_global == "Rashod":
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы → " + category_global)
 
-            # Добавляем запись в таблицу расходы
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
-                "valueInputOption": "USER_ENTERED",
-                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
-                "data": [
-                    {"range": "Расходы!A3:F3",
-                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
-                     "values": [
-                         #заполняем строки
-                         ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global]
-                     ]}
-                ]
-            }).execute()
+            # Добавляем запись в базу данных
+            if get_have_user_any_message(user_id=message.from_user.id) == 0:
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="2", last_ind_dolg="1")
+
+
+                # Добавляем запись в таблицу расходы
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": "Расходы!A2:F2",
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global]
+                        ]}
+                        ]
+                    }).execute()
+
+            else:
+                index_to_add_dohod = int(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id))
+                index_to_add_rashod = int(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id))+1
+                index_to_add_dolg = int(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id))
+                new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
+                # Добавляем запись в таблицу доходы
+                tablelist = "Расходы!A" + str(index_to_add_rashod) + ":F" + str(index_to_add_rashod)
+                print(str(tablelist))
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": tablelist,
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                        ]}
+                        ]
+                }).execute()
+
+
         elif kuda_global == "Dolg":
             await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
 
-            # Добавляем запись в таблицу долги
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
-                "valueInputOption": "USER_ENTERED",
-                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
-                "data": [
-                    {"range": "Долги!A3:F3",
-                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
-                     "values": [
-                         #заполняем строки
-                         ["1", date_global_full, category_global, str(summa_global), prim_global, "",],
-                     ]}
-                ]
-            }).execute()
+            # Добавляем запись в базу данных
+            if get_have_user_any_message(user_id=message.from_user.id) == 0:
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="1", last_ind_dolg="2")
+
+
+                # Добавляем запись в таблицу долги
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": "Долги!A2:F2",
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            ["1", date_global_full, category_global, str(summa_global), prim_global, "",],
+                            ]}
+                    ]
+                    }).execute()
+            else:
+                index_to_add_dohod = int(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id))
+                index_to_add_rashod = int(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id))
+                index_to_add_dolg = int(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id))+1
+                new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
+                # Добавляем запись в таблицу доходы
+                tablelist = "Долги!A" + str(index_to_add_dolg) + ":F" + str(index_to_add_dolg)
+                print(str(tablelist))
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": tablelist,
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                            ]}
+                            ]
+                }).execute()
+
+
+
         elif kuda_global == "Rashod_svyazka":
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы")
 
-            # Добавляем запись в таблицу расходы
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
-                "valueInputOption": "USER_ENTERED",
-                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
-                "data": [
-                    {"range": "Расходы!A3:F3",
-                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
-                     "values": [
-                         #заполняем строки
-                         ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global]
-                     ]}
-                ]
-            }).execute()
+            # Добавляем запись в базу данных
+            if get_have_user_any_message(user_id=message.from_user.id) == 0:
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="2", last_ind_dolg="1")
+
+
+                # Добавляем запись в таблицу расходы
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": "Расходы!A2:F2",
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global]
+                        ]}
+                        ]
+                    }).execute()
+
+            else:
+                index_to_add_dohod = int(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id))
+                index_to_add_rashod = int(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id))+1
+                index_to_add_dolg = int(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id))
+                new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
+                # Добавляем запись в таблицу доходы
+                tablelist = "Расходы!A" + str(index_to_add_rashod) + ":F" + str(index_to_add_rashod)
+                print(str(tablelist))
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": tablelist,
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                        ]}
+                        ]
+                }).execute()
+
         elif kuda_global == "Dolg_svyazka":
             await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
 
-            # Добавляем запись в таблицу долги
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
-                "valueInputOption": "USER_ENTERED",
-                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
-                "data": [
-                    {"range": "Долги!A3:F3",
-                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
-                     "values": [
-                         #заполняем строки
-                         ["1", date_global_full, category_global, str(summa_global), prim_global, "",],
-                     ]}
-                ]
-            }).execute()
+            # Добавляем запись в базу данных
+            if get_have_user_any_message(user_id=message.from_user.id) == 0:
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="1", last_ind_dolg="2")
+
+
+                # Добавляем запись в таблицу долги
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": "Долги!A2:F2",
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            ["1", date_global_full, category_global, str(summa_global), prim_global, "",],
+                            ]}
+                    ]
+                    }).execute()
+            else:
+                index_to_add_dohod = int(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id))
+                index_to_add_rashod = int(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id))
+                index_to_add_dolg = int(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id))+1
+                new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
+                # Добавляем запись в таблицу доходы
+                tablelist = "Долги!A" + str(index_to_add_dolg) + ":F" + str(index_to_add_dolg)
+                print(str(tablelist))
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": tablelist,
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                            ]}
+                            ]
+                }).execute()
         elif kuda_global == "Dohod_svyazka":
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные доходы")
-            # Добавляем запись в таблицу доходы
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
-                "valueInputOption": "USER_ENTERED",
-                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
-                "data": [
-                    {"range": "Доходы!A3:F3",
-                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
-                     "values": [
-                         #заполняем строки
-                         ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global],
-                     ]}
-                ]
-            }).execute()
+            # Добавляем запись в базу данных
+            if get_have_user_any_message(user_id=message.from_user.id) == 0:
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="2", last_ind_rashod="1", last_ind_dolg="1")
+
+
+                # Добавляем запись в таблицу доходы
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": "Доходы!A2:F2",
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                        ]}
+                        ]
+                }).execute()
+            else:
+                index_to_add_dohod = int(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id))+1
+                index_to_add_rashod = int(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id))
+                index_to_add_dolg = int(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id))
+                new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
+                # Добавляем запись в таблицу доходы
+                tablelist = "Доходы!A" + str(index_to_add_dohod) + ":F" + str(index_to_add_dohod)
+                print(str(tablelist))
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": tablelist,
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                        ]}
+                        ]
+                }).execute()
         elif kuda_global == 'Nerazobrano':
-            # Добавляем запись в таблицу расходы
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
-                "valueInputOption": "USER_ENTERED",
-                # Данные воспринимаются, как вводимые пользователем (считается значение формул)
-                "data": [
-                    {"range": "Расходы!A3:F3",
-                     "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
-                     "values": [
-                         #заполняем строки
-                         ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global]
-                     ]}
-                ]
-            }).execute()
+            # Добавляем запись в базу данных
+            if get_have_user_any_message(user_id=message.from_user.id) == 0:
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="2", last_ind_dolg="1")
+
+
+                # Добавляем запись в таблицу расходы
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": "Расходы!A2:F2",
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            ["1", date_global_full, "Наличные", category_global, str(summa_global), prim_global]
+                        ]}
+                        ]
+                    }).execute()
+
+            else:
+                index_to_add_dohod = int(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id))
+                index_to_add_rashod = int(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id))+1
+                index_to_add_dolg = int(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id))
+                new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
+                add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
+                # Добавляем запись в таблицу доходы
+                tablelist = "Расходы!A" + str(index_to_add_rashod) + ":F" + str(index_to_add_rashod)
+                print(str(tablelist))
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
+                    "valueInputOption": "USER_ENTERED",
+                    # Данные воспринимаются, как вводимые пользователем (считается значение формул)
+                    "data": [
+                        {"range": tablelist,
+                        "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
+                        "values": [
+                            #заполняем строки
+                            [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                        ]}
+                        ]
+                }).execute()
             await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы → Неразобранное")
 
 
