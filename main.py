@@ -830,6 +830,18 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     print('Eto bilo pozavchera!')
                     continue
 
+                # Проверяем ключевое слово "доход"
+                if find_word_fraze[element] == 'позавчера':
+                    kuda_global = 'Dohod'
+                    category_global = 'Неразобранное'
+                    continue
+
+                # Проверяем ключевое слово "расход"
+                if find_word_fraze[element] == 'позавчера':
+                    kuda_global = 'Rashod'
+                    category_global = 'Неразобранное'
+                    continue
+
                 # Проверяем есть ли такой синоним ( одно слово ) в доходах, расходах, долгах. 
                 if sort_dohod_sinonims.count(find_word_fraze[element])>0:
                     print('Eto dohod!')
@@ -937,11 +949,11 @@ async def getDataStep(message: types.Message, state: FSMContext):
                         "valueInputOption": "USER_ENTERED",
                         # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                         "data": [
-                            {"range": "Расходы!A2:F2",
+                            {"range": "Расходы!A2:G2",
                             "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                             "values": [
                                 #заполняем строки
-                                [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global]
+                                [str(new_id_to_message), date_global_full, "Ежемесячный", "Наличные", str(category_global), str(summa_global), str(prim_global)],
                             ]}
                             ]
                         }).execute()
@@ -953,7 +965,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
                     # Добавляем запись в таблицу доходы
-                    tablelist = "Расходы!A" + str(index_to_add_rashod) + ":F" + str(index_to_add_rashod)
+                    tablelist = "Расходы!A" + str(index_to_add_rashod) + ":G" + str(index_to_add_rashod)
                     print(str(tablelist))
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                         "valueInputOption": "USER_ENTERED",
@@ -963,7 +975,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                             "values": [
                                 #заполняем строки
-                                [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                                [str(new_id_to_message), date_global_full, "Ежемесячный", "Наличные", str(category_global), str(summa_global), str(prim_global)],
                             ]}
                             ]
                     }).execute()
@@ -1008,7 +1020,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                             "values": [
                                 #заполняем строки
-                                [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                                [str(new_id_to_message), date_global_full, category_global, str(summa_global), prim_global, "",],
                                 ]}
                                 ]
                     }).execute()
@@ -1032,7 +1044,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                             "values": [
                                 #заполняем строки
-                                [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global]
+                                [str(new_id_to_message), date_global_full, "Ежемесячный", "Наличные", str(category_global), str(summa_global), str(prim_global)],
                             ]}
                             ]
                         }).execute()
@@ -1054,7 +1066,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                             "values": [
                                 #заполняем строки
-                                [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                                [str(new_id_to_message), date_global_full, "Ежемесячный", "Наличные", str(category_global), str(summa_global), str(prim_global)],
                             ]}
                             ]
                     }).execute()
@@ -1097,7 +1109,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                             "values": [
                                 #заполняем строки
-                                [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                                [str(new_id_to_message), date_global_full, category_global, str(summa_global), prim_global, "",],
                                 ]}
                                 ]
                     }).execute()
@@ -1157,7 +1169,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                             "values": [
                                 #заполняем строки
-                                [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global]
+                                [str(new_id_to_message), date_global_full, "Ежемесячный", "Наличные", str(category_global), str(summa_global), str(prim_global)],
                             ]}
                             ]
                         }).execute()
@@ -1179,7 +1191,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                             "values": [
                                 #заполняем строки
-                                [str(new_id_to_message), date_global_full, "Наличные", category_global, str(summa_global), prim_global],
+                                [str(new_id_to_message), date_global_full, "Ежемесячный", "Наличные", str(category_global), str(summa_global), str(prim_global)],
                             ]}
                             ]
                     }).execute()
