@@ -135,10 +135,18 @@ def get_id_of_last_message_of_user_id(conn, user_id: int):
     last_message = c.fetchall()
     return last_message[-1][0]
 
+# Delete user from Base
+@ensure_connection
+def delete_user(conn, user_id: int):
+    c = conn.cursor()
+    c.execute('DELETE FROM users WHERE user_id = ?', (user_id,))
+    c.execute('DELETE FROM messages WHERE user_id = ?', (user_id,))
+    conn.commit()
+
 
 
 
 
 if __name__ == '__main__':
 	init_db()
-	add_new_user_to_base(user_id=1, town="Sity", spreedsheetid="123")
+	get_id_of_last_message_of_user_id(user_id=69799)
