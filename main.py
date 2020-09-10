@@ -56,7 +56,7 @@ async def email(message: types.Message, state: FSMContext):
             await registration.next()
 
             spreadsheet = service.spreadsheets().create(body={
-                'properties': {'title': 'Greenz - мои финансы', 'locale': 'ru_RU'},
+                'properties': {'title': 'Penny - мои финансы', 'locale': 'ru_RU'},
                 'sheets': [{'properties': {'sheetType': 'GRID',
                                            'sheetId': 0,
                                            'title': 'Сводка',
@@ -572,9 +572,9 @@ async def getDataStep(message: types.Message, state: FSMContext):
                                                      f'/settings — Настройки\n'
                                                      f'/help — Справка\n'
                                                      f'/delete — Удаление аккаунта\n\n'
-                                                     f'Выберите интересующий раздел справки и получите краткую'
+                                                     f'Выберите интересующий раздел справки и получите краткую '
                                                      f'помощь. Если ваш вопрос не решен, то обратитесь за помощью'
-                                                     f'к живому оператору @greenzapp.', reply_markup=greet_kb)
+                                                     f'к живому оператору https://t.me/finance_helpers', reply_markup=greet_kb)
         elif message.text == "1.Баланс":
             await bot.send_message(message.from_user.id,f"Баланс\n\n"
                             f'Баланс — это маскимальная сумма расходов на сегодня.\n\n'
