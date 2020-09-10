@@ -526,6 +526,82 @@ async def email(message: types.Message, state: FSMContext):
         await registration.next()
         return
 
+#команда balance
+@dp.message_handler(state="*", content_types=types.ContentTypes.TEXT, commands="balance")
+async def delete_account(message: types.Message, state: FSMContext):
+    if get_have_user_in_a_base(user_id=message.from_user.id) == 0:
+        await bot.send_message(message.from_user.id, "Вы ещё не зарегистрированы, сделайте это с помощью команды /start")
+    else:
+        spreadsheetId = get_spreedsheetid_by_user_id(user_id=message.from_user.id)
+        # Вытягиваем бюджет пользователя
+        ranges = ["Бюджеты!B2:G31"]
+
+        results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId, 
+                                                    ranges = ranges, 
+                                                    valueRenderOption = 'FORMATTED_VALUE',  
+                                                    dateTimeRenderOption = 'FORMATTED_STRING').execute() 
+        sheet_values = results['valueRanges'][0]['values']
+        print(str(sheet_values))
+        budjet_of_user = int(sheet_values[0][3])
+        print(str(budjet_of_user))
+
+        # Считаем сколько потрачено за месяц
+        # Вытягиваем все расходы за месяц пользователя
+
+        # Суммируем все расходы за месяц пользователя
+
+
+
+        # Считаем сколько он может потратить сегодня
+        # Пример: сегодня можно потратить: 2000
+
+        # Считаем сколько потрачено из месячного бюджета
+        # Пример: потрачено 15000 из 5000
+
+        # Считаем сколько у него осталось денег на месяц из своего бюджета
+        # Пример: остаток 5 000
+
+        # Выводим это всё в сообщение пользователю 
+
+
+
+#команда cancel
+@dp.message_handler(state="*", content_types=types.ContentTypes.TEXT, commands="cancel")
+async def delete_account(message: types.Message, state: FSMContext):
+    if get_have_user_in_a_base(user_id=message.from_user.id) == 0:
+        await bot.send_message(message.from_user.id, "Вы ещё не зарегистрированы, сделайте это с помощью команды /start")
+    #else:
+        # Вытягиваем ячейки из доходов 
+        #ranges = ["Доходы!B2:G100"]
+
+            #results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId, 
+                                                        #ranges = ranges, 
+                                                        #valueRenderOption = 'FORMATTED_VALUE',  
+                                                        #dateTimeRenderOption = 'FORMATTED_STRING').execute() 
+            #sheet_values = results['valueRanges'][0]['values']
+
+        # Ищем есть ли нужный айди в доходах
+
+        # Если есть, то вытягиваем её и удаляем из таблицы
+
+        # Если есть, то убираем её из базы данных
+
+        # Вытягиваем ячейки из расходов
+
+        # Ищем есть ли нужный айди в расходах
+
+        # Если есть, то вытягиваем её и удаляем из таблицы
+
+        # Если есть, то убираем её из базы данных
+
+        # Вытягиваем ячейки из долгов
+
+        # Ищем есть ли нужный айди в долгах
+
+        # Если есть, то вытягиваем её и удаляем из таблицы
+
+        # Если есть, то убираем её из базы данных
+
 
 #команда delete
 @dp.message_handler(state="*", content_types=types.ContentTypes.TEXT, commands="delete")
@@ -707,9 +783,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
 
         else:
             # Вытягиваем синонимы из таблицы
-            ranges = ["Категории!B2:G31"] # 
-            #user_data = await state.get_data()
-            #spreadsheetId_of_user = f"{user_data['spreedsheetidofuser']}"
+            ranges = ["Категории!B2:G31"]
 
             results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId, 
                                                         ranges = ranges, 
