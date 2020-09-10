@@ -838,13 +838,13 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     continue
 
                 # Проверяем ключевое слово "доход"
-                if find_word_fraze[element] == 'позавчера':
+                if find_word_fraze[element] == 'доход' or find_word_fraze[element] == 'Доход':
                     kuda_global = 'Dohod'
                     category_global = 'Неразобранное'
                     continue
 
                 # Проверяем ключевое слово "расход"
-                if find_word_fraze[element] == 'позавчера':
+                if find_word_fraze[element] == 'расход' or find_word_fraze[element] == 'Расход':
                     kuda_global = 'Rashod'
                     category_global = 'Неразобранное'
                     continue
@@ -854,20 +854,20 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     print('Eto dohod!')
                     kuda_global = 'Dohod'
                     category_global = find_word_fraze[element]
-                    prim_global = str(find_word_fraze[element])
+                    
                     continue
 
                 elif sort_rashod_sinonims.count(find_word_fraze[element])>0:
                     print('Eto rashod')
                     kuda_global = 'Rashod'
                     category_global = find_word_fraze[element]
-                    prim_global = str(find_word_fraze[element])
+                    
                     continue
 
                 elif sort_v_dolg_sinonims.count(find_word_fraze[element])>0:
                     print('Eto v dolg')
                     kuda_global = 'Dolg'
-                    prim_global = str(find_word_fraze[element])
+                   
                     continue
                 else:
                     print('Ne razobral edinichn slovo(')
@@ -906,6 +906,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                 print(date_global_full)
                 now = datetime.datetime.now()
                 date_global_full = datetime.datetime.today().strftime("%d.%m")
+
+            prim_global = message.text
 
             # Процесс обработки сообщения прошёл
             # Происходит полная запись в бд 
