@@ -10,6 +10,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from sqlite_db_worker import *
+import datetime
 memory_storage = MemoryStorage()
 # подключаем токен бота
 bot = Bot(token=BOT_TOKEN)
@@ -763,6 +764,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
             summa_global = 0
             mesyac_global = ''
             den_global = ''
+            nulls_adding = 0
 
             # Разбираем искомую фразы через пробел на слова.
             find_word_fraze = find_word.split(' ')
@@ -800,6 +802,11 @@ async def getDataStep(message: types.Message, state: FSMContext):
                 if sort_month_sinonims.count(find_word_fraze[element])>0:
                     print('Eto mesyac: ' + str(find_word_fraze[element]))
                     mesyac_global = str(find_word_fraze[element])
+                    continue
+
+            # Проверяем есть ли у нас запись "000"
+                if find_word_fraze[element] == "000":
+                    nulls_adding = 1
                     continue
 
 
@@ -891,6 +898,17 @@ async def getDataStep(message: types.Message, state: FSMContext):
                                 print('Ne poluchilos razobrat: ' + find_word)
                                 kuda_global = 'Nerazobrano'
 
+
+
+            if not date_global_full and date_global_full.strip():
+                pass
+            else:
+                print(date_global_full)
+                now = datetime.datetime.now()
+                date_global_full = datetime.datetime.today().strftime("%d.%m")
+
+            # Процесс обработки сообщения прошёл
+            # Происходит полная запись в бд 
             if kuda_global == "Dohod":
                 # Отправляем сообщение ботом
                 await bot.send_message(message.from_user.id, "Записано в Ежемесячные доходы → " + category_global)
@@ -900,7 +918,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="2", last_ind_rashod="1", last_ind_dolg="1")
 
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id))
-
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     # Добавляем запись в таблицу доходы
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                         "valueInputOption": "USER_ENTERED",
@@ -923,6 +942,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     # Добавляем запись в таблицу доходы
                     tablelist = "Доходы!A" + str(index_to_add_dohod) + ":F" + str(index_to_add_dohod)
                     print(str(tablelist))
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                         "valueInputOption": "USER_ENTERED",
                         # Данные воспринимаются, как вводимые пользователем (считается значение формул)
@@ -944,6 +965,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="2", last_ind_dolg="1")
 
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id))
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     # Добавляем запись в таблицу расходы
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                         "valueInputOption": "USER_ENTERED",
@@ -965,6 +988,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
                     # Добавляем запись в таблицу доходы
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     tablelist = "Расходы!A" + str(index_to_add_rashod) + ":G" + str(index_to_add_rashod)
                     print(str(tablelist))
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
@@ -983,7 +1008,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
 
             elif kuda_global == "Dolg":
                 await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
-
+                if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                 # Добавляем запись в базу данных
                 if get_have_user_any_message(user_id=message.from_user.id) == 0:
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="1", last_ind_dolg="2")
@@ -1010,6 +1036,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
                     # Добавляем запись в таблицу доходы
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     tablelist = "Долги!A" + str(index_to_add_dolg) + ":F" + str(index_to_add_dolg)
                     print(str(tablelist))
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
@@ -1029,7 +1057,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
 
             elif kuda_global == "Rashod_svyazka":
                 await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы")
-
+                if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                 # Добавляем запись в базу данных
                 if get_have_user_any_message(user_id=message.from_user.id) == 0:
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="2", last_ind_dolg="1")
@@ -1054,6 +1083,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     index_to_add_rashod = int(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id))+1
                     index_to_add_dolg = int(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id))
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
                     # Добавляем запись в таблицу доходы
                     tablelist = "Расходы!A" + str(index_to_add_rashod) + ":F" + str(index_to_add_rashod)
@@ -1073,7 +1104,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
 
             elif kuda_global == "Dolg_svyazka":
                 await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
-
+                if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                 # Добавляем запись в базу данных
                 if get_have_user_any_message(user_id=message.from_user.id) == 0:
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="1", last_ind_dolg="2")
@@ -1099,6 +1131,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
                     # Добавляем запись в таблицу доходы
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     tablelist = "Долги!A" + str(index_to_add_dolg) + ":F" + str(index_to_add_dolg)
                     print(str(tablelist))
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
@@ -1118,7 +1152,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                 # Добавляем запись в базу данных
                 if get_have_user_any_message(user_id=message.from_user.id) == 0:
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="2", last_ind_rashod="1", last_ind_dolg="1")
-
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id))
                     # Добавляем запись в таблицу доходы
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
@@ -1134,6 +1169,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             ]
                     }).execute()
                 else:
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     index_to_add_dohod = int(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id))+1
                     index_to_add_rashod = int(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id))
                     index_to_add_dolg = int(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id))
@@ -1158,7 +1195,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                 # Добавляем запись в базу данных
                 if get_have_user_any_message(user_id=message.from_user.id) == 0:
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="2", last_ind_dolg="1")
-
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id))
                     # Добавляем запись в таблицу расходы
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
@@ -1182,6 +1220,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
                     # Добавляем запись в таблицу доходы
                     tablelist = "Расходы!A" + str(index_to_add_rashod) + ":F" + str(index_to_add_rashod)
+                    if nulls_adding == 1:
+                        summa_global = str(summa_global) + " 000"
                     print(str(tablelist))
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, body={
                         "valueInputOption": "USER_ENTERED",
