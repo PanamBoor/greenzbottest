@@ -791,10 +791,15 @@ async def getDataStep(message: types.Message, state: FSMContext):
                                                         dateTimeRenderOption = 'FORMATTED_STRING').execute() 
             sheet_values = results['valueRanges'][0]['values']
 
+            print(str(sheet_values))
+
 
             dohod_sinonims = ''
             rashod_sinonims = ''
             v_dolg_sinonims = ''
+            dict_of_categories_dohod = {'Доход': 'доход'}
+            dict_of_categories_rashod = {'Расход': 'расход'}
+            dict_of_categories_dolg = {'Долг': 'долг'}
 
             # Пишем выборку, что добавить в сортировку синонимов
             for element in sheet_values:
@@ -806,22 +811,23 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     if element[2] == "1":
                         if len(element) == 6:
                             dohod_sinonims = dohod_sinonims + ", " + element[5]
+                            dict_of_categories_dohod[str(element[4])] = str(element[5])
                         continue
                     elif element[1] == "1":
                         if len(element) == 6:
                             rashod_sinonims = rashod_sinonims + ", " + element[5]
+                            dict_of_categories_rashod[str(element[4])] = str(element[5])
                         continue
                     elif element[3] == "1":
                         if len(element) == 6:
                             v_dolg_sinonims = v_dolg_sinonims + ", " + element[5]
+                            dict_of_categories_dolg[str(element[4])] = str(element[5])
                         continue
                     else:
                         pass
 
-            # Обозначаем слова, которые отвечают за доход и за долг
-            #dohod_sinonims = 'работа, бизнес, продажа бизнеса'
-            #rashod_sinonims = 'девушка, бензин, машина'
-            #v_dolg_sinonims = 'дал в долг, отдал в долг, закинул в долг'
+            print('Dict of dohod: ' + str(dict_of_categories_dohod))
+
 
             # Отмечаем дефолтные слова, которых обрабатывает бот
             kratko_dni_sinonims = 'пн, вт, ср, чт, пт, сб, вс'
@@ -927,20 +933,28 @@ async def getDataStep(message: types.Message, state: FSMContext):
                 if sort_dohod_sinonims.count(find_word_fraze[element])>0:
                     print('Eto dohod!')
                     kuda_global = 'Dohod'
-                    category_global = find_word_fraze[element]
+                    for key, value in dict_of_categories_dohod.items():
+                        if value.count(find_word_fraze[element])>0:
+                            category_global = str(key)
                     
+
                     continue
 
                 elif sort_rashod_sinonims.count(find_word_fraze[element])>0:
                     print('Eto rashod')
                     kuda_global = 'Rashod'
-                    category_global = find_word_fraze[element]
+                    for key, value in dict_of_categories_rashod.items():
+                        if value.count(find_word_fraze[element])>0:
+                            category_global = str(key)
                     
                     continue
 
                 elif sort_v_dolg_sinonims.count(find_word_fraze[element])>0:
                     print('Eto v dolg')
                     kuda_global = 'Dolg'
+                    for key, value in dict_of_categories_dolg.items():
+                        if value.count(find_word_fraze[element])>0:
+                            category_global = str(key)
                    
                     continue
                 else:
@@ -1083,7 +1097,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
 
 
             elif kuda_global == "Dolg":
-                await bot.send_message(message.from_user.id, 'Записано в раздел "Долги"')
+                await bot.send_message(message.from_user.id, "Записано в раздел 'Долги' → " + category_global)
                 if nulls_adding == 1:
                         summa_global = str(summa_global) + " 000"
                 # Добавляем запись в базу данных
