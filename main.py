@@ -986,6 +986,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                                 print('Ne poluchilos razobrat: ' + find_word)
                                 kuda_global = 'Nerazobrano'
 
+            if not category_global:
+                category_global = "Неразобранное"
 
 
             if not date_global_full and date_global_full.strip():
@@ -1293,7 +1295,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                         "valueInputOption": "USER_ENTERED",
                         # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                         "data": [
-                            {"range": "Расходы!A2:F2",
+                            {"range": "Расходы!A2:G2",
                             "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                             "values": [
                                 #заполняем строки
@@ -1309,7 +1311,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id)) + 1
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
                     # Добавляем запись в таблицу доходы
-                    tablelist = "Расходы!A" + str(index_to_add_rashod) + ":F" + str(index_to_add_rashod)
+                    tablelist = "Расходы!A" + str(index_to_add_rashod) + ":G" + str(index_to_add_rashod)
                     if nulls_adding == 1:
                         summa_global = str(summa_global) + " 000"
                     print(str(tablelist))
