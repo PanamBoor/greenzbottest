@@ -109,7 +109,7 @@ def get_last_message_of_user_id_in_dohod(conn, user_id: int):
     c = conn.cursor()
     c.execute("SELECT last_ind_dohod FROM messages WHERE user_id = ?", (user_id, ))
     last_message = c.fetchall()
-    return last_message[-1][0][0]
+    return last_message[-1][0]
 
 # Get last message from user_id in table in rashod
 @ensure_connection
@@ -117,7 +117,7 @@ def get_last_message_of_user_id_in_rashod(conn, user_id: int):
     c = conn.cursor()
     c.execute("SELECT last_ind_rashod FROM messages WHERE user_id = ?", (user_id, ))
     last_message = c.fetchall()
-    return last_message[-1][0][0]
+    return last_message[-1][0]
 
 # Get last message from user_id in table in dolg
 @ensure_connection
@@ -125,7 +125,7 @@ def get_last_message_of_user_id_in_dolg(conn, user_id: int):
     c = conn.cursor()
     c.execute("SELECT last_ind_dolg FROM messages WHERE user_id = ?", (user_id, ))
     last_message = c.fetchall()
-    return last_message[-1][0][0]
+    return last_message[-1][0]
 
 # Get last id of message in table
 @ensure_connection
@@ -148,5 +148,7 @@ def delete_user(conn, user_id: int):
 
 
 if __name__ == '__main__':
-	init_db()
-	get_id_of_last_message_of_user_id(user_id=69799)
+    init_db()
+    print(str(get_id_of_last_message_of_user_id(user_id=186928299)))
+    print(str(get_have_user_any_message(user_id=186928299)))
+    print(str(get_last_message_of_user_id_in_rashod(user_id=186928299)))

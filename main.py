@@ -1008,7 +1008,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                 # Добавляем запись в базу данных
                 if get_have_user_any_message(user_id=message.from_user.id) == 0:
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="2", last_ind_rashod="1", last_ind_dolg="1")
-
+                    print("ONLY NEW MESSAGE")
                     new_id_to_message = int(get_id_of_last_message_of_user_id(user_id=message.from_user.id))
                     if nulls_adding == 1:
                         summa_global = str(summa_global) + " 000"
@@ -1286,6 +1286,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
             elif kuda_global == 'Nerazobrano':
                 # Добавляем запись в базу данных
                 if get_have_user_any_message(user_id=message.from_user.id) == 0:
+                    print("PERVIY RAZ VVODIT")
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod="1", last_ind_rashod="2", last_ind_dolg="1")
                     if nulls_adding == 1:
                         summa_global = str(summa_global) + " 000"
@@ -1312,6 +1313,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     add_new_message_in_base_in_dohod(user_id=message.from_user.id, spreedsheetid=spreadsheetId, last_message=message.text, last_ind_dohod=str(index_to_add_dohod), last_ind_dolg=str(index_to_add_dolg), last_ind_rashod=str(index_to_add_rashod))
                     # Добавляем запись в таблицу доходы
                     tablelist = "Расходы!A" + str(index_to_add_rashod) + ":G" + str(index_to_add_rashod)
+                    print(tablelist)
                     if nulls_adding == 1:
                         summa_global = str(summa_global) + " 000"
                     print(str(tablelist))
