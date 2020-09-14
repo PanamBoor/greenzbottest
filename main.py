@@ -260,7 +260,7 @@ async def email(message: types.Message, state: FSMContext):
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
-                    {"range": "Расходы!A1:G20",
+                    {"range": "Расходы!A1:G100",
                      "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                      "values": [
                          #заполняем строки
@@ -275,7 +275,7 @@ async def email(message: types.Message, state: FSMContext):
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
-                    {"range": "Доходы!A1:F20",
+                    {"range": "Доходы!A1:F100",
                      "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                      "values": [
                          #заполняем строки
@@ -290,7 +290,7 @@ async def email(message: types.Message, state: FSMContext):
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
-                    {"range": "Долги!A1:G20",
+                    {"range": "Долги!A1:G100",
                      "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                      "values": [
                          #заполняем строки
