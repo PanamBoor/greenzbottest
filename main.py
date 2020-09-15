@@ -33,8 +33,8 @@ async def start(message: types.Message):
     # Проверка есть ли пользователь уже в базе?
     if get_have_user_in_a_base(user_id=message.from_user.id) == 0:
         await bot.send_message(message.from_user.id,
-                            f'{message.from_user.first_name},для работы необходимо зарегестрироваться.\nЭто займет пару минут.\n\n' \
-                            + 'Шаг 1/3.Укажите электронную почту(только @gmail.com).К ящику будет привязана google-таблица с Вашими финансами')
+                            f'{message.from_user.first_name}, для работы необходимо зарегестрироваться.\nЭто займет пару минут.\n\n' \
+                            + 'Шаг 1/3.Укажите электронную почту(только @gmail.com). К ящику будет привязана google-таблица с Вашими финансами')
         await registration.waiting_for_gmail.set()
     else:
         await bot.send_message(message.from_user.id, "Вы уже зарегистрированы!")
@@ -260,7 +260,7 @@ async def email(message: types.Message, state: FSMContext):
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
-                    {"range": "Расходы!A1:G100",
+                    {"range": "Расходы!A1:G1000",
                      "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                      "values": [
                          #заполняем строки
@@ -275,7 +275,7 @@ async def email(message: types.Message, state: FSMContext):
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
-                    {"range": "Доходы!A1:F100",
+                    {"range": "Доходы!A1:F1000",
                      "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                      "values": [
                          #заполняем строки
@@ -290,7 +290,7 @@ async def email(message: types.Message, state: FSMContext):
                 "valueInputOption": "USER_ENTERED",
                 # Данные воспринимаются, как вводимые пользователем (считается значение формул)
                 "data": [
-                    {"range": "Долги!A1:G100",
+                    {"range": "Долги!A1:G1000",
                      "majorDimension": "ROWS",  # Сначала заполнять строки, затем столбцы
                      "values": [
                          #заполняем строки
@@ -499,10 +499,10 @@ async def email(message: types.Message, state: FSMContext):
         print(budjet)
 
 
-        await bot.send_message(message.from_user.id, f'Поздравляем!Вы успешно зарегестрированны в Greenz.')
+        await bot.send_message(message.from_user.id, f'Поздравляем! Вы успешно зарегестрированны в Penny.')
         await bot.send_message(message.from_user.id, f'Теперь вы можете отправлять доходы и расходы нашему'
-                                                     f' боту.Cправка по работе с ботом - /help.Все записи заносятся в'
-                                                     f'google-таблицу(подробная справка внутри таблицы).Ссылка на таблицу - /table')
+                                                     f' боту.Cправка по работе с ботом - /help. Все записи заносятся в'
+                                                     f' google-таблицу (подробная справка внутри таблицы). Ссылка на таблицу - /table')
         await bot.send_message(message.from_user.id, 'Примеры сообщений для бота - команда /samples.')
 
         # Записываем сразу в таблицу месячный бюджет пользователя
@@ -645,7 +645,6 @@ async def getDataStep(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, f'Cправка\n\n'
                                                      f'/balance — Мой баланс\n'
                                                      f'/table — Cсылка на google-таблицу\n'
-                                                     f'/sync — Синхронизация бота c google-таблицей\n'
                                                      f'/settings — Настройки\n'
                                                      f'/help — Справка\n'
                                                      f'/delete — Удаление аккаунта\n\n'
@@ -706,9 +705,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             f'сообщения для бота.Например у бюджета "Годовые расходы"\n'
                             f'есть синоним "год".Изменять синонимы можно\n'
                             f'самостоятельно,для этого перейдите \n'
-                            f'в google-таблицу /table.\n\n'
-                            f'После изменения google-таблицы не забывайте\n'
-                            f'синхронизировать её с ботом командой /sync.')
+                            f'в google-таблицу /table.\n\n')
         elif message.text == "6.Источники":
             await bot.send_message(message.from_user.id,f'Источники\n\n'
                             f'Источники — это наличные, кредитные и дебитовые карты и т.п.\n\n'
@@ -718,9 +715,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             f'сообщения для бота.Например у источника "Банковская\n'
                             f'карта" может быть "сбер" или "альфа".Изменять синонимы\n'
                             f'можно самостоятельно,для этого перейдите в google-таблицу\n'
-                            f'/table.\n\n'
-                            f'После изменения google-таблицы не забывайте\n'
-                            f'синхронизировать её с ботом командой /sync.')
+                            f'/table.\n\n')
         elif message.text == "7.Категории":
             await bot.send_message(message.from_user.id,f'Категории\n\n'
                             f'Категории — основные типы расходов для удобства их\n'
@@ -732,9 +727,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             f'могут быть синонимы "авто,машина,стоянка,гараж,осаго,\n'
                             f'бензин,бенз".Любое сообщение с этими словами будет\n'
                             f'добавлено в "Автомобиль".\n\n'
-                            f'Изменять синонимы можно самостоятельно, для этого\n'
-                            f'перейдите в google-таблицу /table. После изменения таблицы\n'
-                            f'не забывайте синхронизировать её с ботом командой /sync.')
+                            f'Изменять синонимы можно самостоятельно, для этого\n')
         elif message.text == "8.Google-таблица":
             await bot.send_message(message.from_user.id,f'Google-таблица\n\n'
                             f'Таблица в Google позволяет увидеть наглядные отчеты или\n'
@@ -745,8 +738,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             f'командой /sync.После синхронизации все изменения будут\n'
                             f'внесены в базу бота,и он будет учитывать новый баланс и\n'
                             f'синонимы \n'
-                            f'Ссылка на таблицу доступная по команде /table.".\n\n'
-                            f'Cправка по таблице — https://www.greenzbot.ru/help\n')
+                            f'Ссылка на таблицу доступная по команде /table.".\n\n')
         elif message.text == "/samples":
             await bot.send_message(message.from_user.id,f'Примеры сообщений для бота:\n\n'
                             f'“продукты 750”\n'
