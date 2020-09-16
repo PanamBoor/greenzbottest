@@ -135,6 +135,14 @@ def get_id_of_last_message_of_user_id(conn, user_id: int):
     last_message = c.fetchall()
     return last_message[-1][0]
 
+# Delete last message of user_id
+@ensure_connection
+def delete_last_message(conn, user_id: int):
+    c = conn.cursor()
+    last_user_id = get_id_of_last_message_of_user_id(user_id=user_id)
+    c.execute('DELETE FROM messages WHERE user_id = ? AND id = ?', (user_id, last_user_id))
+    conn.commit()
+
 # Delete user from Base
 @ensure_connection
 def delete_user(conn, user_id: int):
@@ -149,6 +157,3 @@ def delete_user(conn, user_id: int):
 
 if __name__ == '__main__':
     init_db()
-    print(str(get_id_of_last_message_of_user_id(user_id=186928299)))
-    print(str(get_have_user_any_message(user_id=186928299)))
-    print(str(get_last_message_of_user_id_in_rashod(user_id=186928299)))

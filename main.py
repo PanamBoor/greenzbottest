@@ -567,40 +567,97 @@ async def delete_account(message: types.Message, state: FSMContext):
 
 #команда cancel
 @dp.message_handler(state="*", content_types=types.ContentTypes.TEXT, commands="cancel")
-async def delete_account(message: types.Message, state: FSMContext):
+async def delete_last_message_in_bot(message: types.Message, state: FSMContext):
     if get_have_user_in_a_base(user_id=message.from_user.id) == 0:
         await bot.send_message(message.from_user.id, "Вы ещё не зарегистрированы, сделайте это с помощью команды /start")
-    #else:
+    else:
+        last_message_id_of_user = get_id_of_last_message_of_user_id(user_id=message.from_user.id)
+        spreadsheetId = get_spreedsheetid_by_user_id(user_id=message.from_user.id)
         # Вытягиваем ячейки из доходов 
-        #ranges = ["Доходы!B2:G100"]
+        ranges = ["Доходы!A1:A1000"]
 
-            #results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId, 
-                                                        #ranges = ranges, 
-                                                        #valueRenderOption = 'FORMATTED_VALUE',  
-                                                        #dateTimeRenderOption = 'FORMATTED_STRING').execute() 
-            #sheet_values = results['valueRanges'][0]['values']
+        results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId, 
+                                                    ranges = ranges, 
+                                                    valueRenderOption = 'FORMATTED_VALUE',  
+                                                    dateTimeRenderOption = 'FORMATTED_STRING').execute() 
+        sheet_values = results['valueRanges'][0]['values']
+        print(str(sheet_values))
 
         # Ищем есть ли нужный айди в доходах
+        for element in sheet_values:
+            print("Element / last message " + str(element[0]) + " last message - " + str(last_message_id_of_user))
+            if str(element[0]) == str(last_message_id_of_user):
+                print("Last zapis in dohodi")
 
-        # Если есть, то вытягиваем её и удаляем из таблицы
+                # Если есть, то вытягиваем её и удаляем из таблицы
+                tablelist = "Доходы!A" + str(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id)) + ":F" + str(get_last_message_of_user_id_in_dohod(user_id=message.from_user.id))
+                print(str(tablelist))
 
-        # Если есть, то убираем её из базы данных
+                batch_clear_values_request_body = {
+                    'ranges': tablelist,
+                }
+                request = service.spreadsheets().values().batchClear(spreadsheetId=spreadsheetId, body=batch_clear_values_request_body)
+                response = request.execute()
+
 
         # Вытягиваем ячейки из расходов
+        ranges = ["Расходы!A1:A1000"]
+
+        results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId, 
+                                                    ranges = ranges, 
+                                                    valueRenderOption = 'FORMATTED_VALUE',  
+                                                    dateTimeRenderOption = 'FORMATTED_STRING').execute() 
+        sheet_values = results['valueRanges'][0]['values']
+        print(str(sheet_values))
 
         # Ищем есть ли нужный айди в расходах
+        for element in sheet_values:
+            print("Element / last message " + str(element[0]) + " last message - " + str(last_message_id_of_user))
+            if str(element[0]) == str(last_message_id_of_user):
+                
+                print("Last zapis in rashodi")
 
-        # Если есть, то вытягиваем её и удаляем из таблицы
+                # Если есть, то вытягиваем её и удаляем из таблицы
+                tablelist = "Расходы!A" + str(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id)) + ":G" + str(get_last_message_of_user_id_in_rashod(user_id=message.from_user.id))
+                print(str(tablelist))
+                batch_clear_values_request_body = {
+                    'ranges': tablelist,
+                }
+                request = service.spreadsheets().values().batchClear(spreadsheetId=spreadsheetId, body=batch_clear_values_request_body)
+                response = request.execute()
 
-        # Если есть, то убираем её из базы данных
 
         # Вытягиваем ячейки из долгов
+        ranges = ["Долги!A1:A1000"]
+
+        results = service.spreadsheets().values().batchGet(spreadsheetId = spreadsheetId, 
+                                                    ranges = ranges, 
+                                                    valueRenderOption = 'FORMATTED_VALUE',  
+                                                    dateTimeRenderOption = 'FORMATTED_STRING').execute() 
+        sheet_values = results['valueRanges'][0]['values']
+        print(str(sheet_values))
 
         # Ищем есть ли нужный айди в долгах
+        for element in sheet_values:
+            print("Element / last message " + str(element[0]) + " last message - " + str(last_message_id_of_user))
+            if str(element[0]) == str(last_message_id_of_user):
+                
+                print("Last zapis in dolgi")
 
-        # Если есть, то вытягиваем её и удаляем из таблицы
+                # Если есть, то вытягиваем её и удаляем из таблицы
+                tablelist = "Долги!A" + str(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id)) + ":F" + str(get_last_message_of_user_id_in_dolg(user_id=message.from_user.id))
+                print(str(tablelist))
+                batch_clear_values_request_body = {
+                    'ranges': tablelist,
+                }
+                request = service.spreadsheets().values().batchClear(spreadsheetId=spreadsheetId, body=batch_clear_values_request_body)
+                response = request.execute()
 
-        # Если есть, то убираем её из базы данных
+        # Убираем её из базы данных
+        delete_last_message(user_id=message.from_user.id)
+
+        # Если успешно всё убрали - вывели сообщение о том, что мы убрали данную запись
+        await bot.send_message(message.from_user.id, "Последняя запись была убрана из таблицы!")
 
 
 #команда delete
