@@ -734,8 +734,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             f'вносить изменения,минуя бота.Смотрите на таблицуне реже 1\n'
                             f'раза в неделю,чтобы иметь наглядное представление о \n'
                             f'Ваших финансах.\n\n'
-                            f'Ссылка на таблицу доступная по команде /table.".\n\n'
-                            f'Справка и помощь по таблице - https://t.me/finance_helpers".\n\n')
+                            f'Ссылка на таблицу доступна по команде /table\n\n'
+                            f'Справка и помощь по таблице - https://t.me/finance_helpers\n\n')
         elif message.text == "/samples":
             await bot.send_message(message.from_user.id,f'Примеры сообщений для бота:\n\n'
                             f'“продукты 750”\n'
