@@ -33,7 +33,7 @@ async def start(message: types.Message):
     # Проверка есть ли пользователь уже в базе?
     if get_have_user_in_a_base(user_id=message.from_user.id) == 0:
         await bot.send_message(message.from_user.id,
-                            f'{message.from_user.first_name}, для работы необходимо зарегестрироваться.\nЭто займет пару минут.\n\n' \
+                            f'{message.from_user.first_name}, для работы необходимо зарегестрироваться.\nЭто займет меньше минуты.\n\n' \
                             + 'Шаг 1/3.Укажите электронную почту(только @gmail.com). К ящику будет привязана google-таблица с Вашими финансами')
         await registration.waiting_for_gmail.set()
     else:
@@ -734,7 +734,8 @@ async def getDataStep(message: types.Message, state: FSMContext):
                             f'вносить изменения,минуя бота.Смотрите на таблицуне реже 1\n'
                             f'раза в неделю,чтобы иметь наглядное представление о \n'
                             f'Ваших финансах.\n\n'
-                            f'Ссылка на таблицу доступная по команде /table.".\n\n')
+                            f'Ссылка на таблицу доступная по команде /table.".\n\n'
+                            f'Справка и помощь по таблице - https://t.me/finance_helpers".\n\n')
         elif message.text == "/samples":
             await bot.send_message(message.from_user.id,f'Примеры сообщений для бота:\n\n'
                             f'“продукты 750”\n'
