@@ -657,7 +657,7 @@ async def delete_last_message_in_bot(message: types.Message, state: FSMContext):
         delete_last_message(user_id=message.from_user.id)
 
         # Если успешно всё убрали - вывели сообщение о том, что мы убрали данную запись
-        await bot.send_message(message.from_user.id, "Последняя запись была убрана из таблицы!")
+        await bot.send_message(message.from_user.id, "Последняя запись удалена.")
 
 
 #команда delete
