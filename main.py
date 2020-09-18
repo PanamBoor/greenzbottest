@@ -1045,6 +1045,15 @@ async def getDataStep(message: types.Message, state: FSMContext):
 
             prim_global = message.text
 
+            # Delete summ from prim_global
+            if not summa_global:
+                pass
+            else:
+                print("will replace this")
+                prim_global = prim_global.replace(str(summa_global), '')
+
+            print("summa_global - " + (str(summa_global)) + " / prim_global - " + str(prim_global))
+
             # Процесс обработки сообщения прошёл
             # Происходит полная запись в бд 
             if kuda_global == "Dohod":
