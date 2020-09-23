@@ -10,7 +10,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from sqlite_db_worker import *
-import datetime
+from datetime import *
 memory_storage = MemoryStorage()
 # подключаем токен бота
 bot = Bot(token=BOT_TOKEN)
@@ -955,11 +955,15 @@ async def getDataStep(message: types.Message, state: FSMContext):
 
                 # Проверяем ключевое слово вчера, чтобы записывать сразу дату с функционал этого ключевого слова.
                 if find_word_fraze[element] == 'вчера':
+                    yesterday = datetime.now() - timedelta(1)
+                    date_global_full = yesterday.strftime("%d.%m")
                     print('Eto bilo vchera!')
                     continue
 
                 # Проверяем ключевое слово позавчера, чтобы записывать сразу дату с функционал этого ключевого слова.
                 if find_word_fraze[element] == 'позавчера':
+                    afteryesterday = datetime.now() - timedelta(2)
+                    date_global_full = afteryesterday.strftime("%d.%m")
                     print('Eto bilo pozavchera!')
                     continue
 
@@ -1036,12 +1040,12 @@ async def getDataStep(message: types.Message, state: FSMContext):
                 category_global = "Неразобранное"
 
 
-            if not date_global_full and date_global_full.strip():
-                pass
-            else:
+            if not date_global_full:
                 print(date_global_full)
-                now = datetime.datetime.now()
-                date_global_full = datetime.datetime.today().strftime("%d.%m")
+                now = datetime.now()
+                date_global_full = now.strftime("%d.%m")
+            else:
+                pass
 
             prim_global = message.text
 
