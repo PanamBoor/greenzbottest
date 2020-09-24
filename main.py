@@ -460,6 +460,21 @@ async def email(message: types.Message, state: FSMContext):
                     }
                 ]
             }).execute()
+            # Наводим косметический ремонт с топом страницы
+            results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheetId, body={
+                "requests": [
+                    
+                    {
+                  "top": {
+                      "style": "DASHED",
+                      "width": 1,
+                      "color": {
+                        "blue": 1.0
+                      },
+                    }
+                }
+                ]
+                }).execute()
             await bot.send_message(message.from_user.id, 'ШАГ 2/3.Введите город в котором вы проживаете')
             break
         else:
