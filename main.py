@@ -60,7 +60,7 @@ async def email(message: types.Message, state: FSMContext):
                 'properties': {'title': 'Penny - мои финансы', 'locale': 'ru_RU'},
                 'sheets': [{'properties': {'sheetType': 'GRID',
                                            'sheetId': 0,
-                                           'title': 'Сводка',
+                                           'title': 'Расходы',
                                            'gridProperties': {'rowCount': 200, 'columnCount': 30}}}]
             }).execute()
             await bot.send_message(message.from_user.id,"Создание таблицы....")
@@ -78,65 +78,6 @@ async def email(message: types.Message, state: FSMContext):
                 fields='id'
             ).execute()
             await bot.send_message(message.from_user.id, "Регистрация....")
-            # Добавление листа Статистика
-            results = service.spreadsheets().batchUpdate(
-                spreadsheetId=spreadsheetId,
-                body=
-                {
-                    "requests": [
-                        {
-                            "addSheet": {
-                                "properties": {
-                                    "title": "Статистика",
-                                    "gridProperties": {
-                                        "rowCount": 100,
-                                        "columnCount": 20
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }).execute()
-            # Добавление листа Графики
-            results = service.spreadsheets().batchUpdate(
-                spreadsheetId=spreadsheetId,
-                body=
-                {
-                    "requests": [
-                        {
-                            "addSheet": {
-                                "properties": {
-                                    "title": "Графики",
-                                    "gridProperties": {
-                                        "rowCount": 100,
-                                        "columnCount": 20
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }).execute()
-
-            # Добавление листа Расходы
-            await bot.send_message(message.from_user.id, "Иннициализация расходов....")
-            results = service.spreadsheets().batchUpdate(
-                spreadsheetId=spreadsheetId,
-                body=
-                {
-                    "requests": [
-                        {
-                            "addSheet": {
-                                "properties": {
-                                    "title": "Расходы",
-                                    "gridProperties": {
-                                        "rowCount": 100,
-                                        "columnCount": 20
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }).execute()
             # Добавление листа Доходы
             await bot.send_message(message.from_user.id, "Иннициализация доходов....")
             results = service.spreadsheets().batchUpdate(
@@ -145,6 +86,7 @@ async def email(message: types.Message, state: FSMContext):
                 {
                     "requests": [
                         {
+
                             "addSheet": {
                                 "properties": {
                                     "title": "Доходы",
@@ -153,7 +95,11 @@ async def email(message: types.Message, state: FSMContext):
                                         "columnCount": 20
                                     }
                                 }
-                            }
+                            },
+
+
+
+
                         }
                     ]
                 }).execute()
@@ -183,6 +129,7 @@ async def email(message: types.Message, state: FSMContext):
                 spreadsheetId=spreadsheetId,
                 body=
                 {
+
                     "requests": [
                         {
                             "addSheet": {
@@ -224,7 +171,9 @@ async def email(message: types.Message, state: FSMContext):
                 body=
                 {
                     "requests": [
+
                         {
+
                             "addSheet": {
                                 "properties": {
                                     "title": "Категории",
@@ -234,6 +183,8 @@ async def email(message: types.Message, state: FSMContext):
                                     }
                                 }
                             }
+
+
                         }
                     ]
                 }).execute()
@@ -244,15 +195,12 @@ async def email(message: types.Message, state: FSMContext):
             for sheet in sheetList:
                 print(sheet['properties']['sheetId'], sheet['properties']['title'])
 
-            sheetId_Svodka = sheetList[0]['properties']['sheetId']
-            sheetId_Statistika = sheetList[1]['properties']['sheetId']
-            sheetId_Graph = sheetList[2]['properties']['sheetId']
-            sheetId_rashod = sheetList[3]['properties']['sheetId']
-            sheetId_dohod= sheetList[4]['properties']['sheetId']
-            sheetId_dolg = sheetList[5]['properties']['sheetId']
-            sheetId_budjet = sheetList[6]['properties']['sheetId']
-            sheetId_istochniki= sheetList[7]['properties']['sheetId']
-            sheetId_kategorii = sheetList[8]['properties']['sheetId']
+            sheetId_rashod = sheetList[0]['properties']['sheetId']
+            sheetId_dohod= sheetList[1]['properties']['sheetId']
+            sheetId_dolg = sheetList[2]['properties']['sheetId']
+            sheetId_budjet = sheetList[3]['properties']['sheetId']
+            sheetId_istochniki= sheetList[4]['properties']['sheetId']
+            sheetId_kategorii = sheetList[5]['properties']['sheetId']
 
 
             # Расходы заполняем ячейки
@@ -265,7 +213,8 @@ async def email(message: types.Message, state: FSMContext):
                      "values": [
                          #заполняем строки
                          ["ID", "Дата", "Бюджет","Источник","Категория","Сумма","Примечание"],  # Заполняем первую строку
-                     ]}
+                     ]},
+
                 ]
             }).execute()
 
@@ -313,7 +262,8 @@ async def email(message: types.Message, state: FSMContext):
                          ["","1","1","Ежемесячные расходы","","Месяц",""],
                          ["","1","0","Годовые расходы","","Год","годовые, годовой, год"],
                          ["", "1","0", "Внебюджет", "", "Год", "вне"]
-                     ]}
+                     ]},
+
                 ]
             }).execute()
 
@@ -379,6 +329,66 @@ async def email(message: types.Message, state: FSMContext):
                      ]}
                 ]
             }).execute()
+            # задаем размеры таблиц
+            results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheetId, body={
+                "requests": [
+                    # Таблица Бюджеты размер.
+                    # Задать ширину столбца G: 200 пикселей
+                    {
+                        "updateDimensionProperties": {
+                            "range": {
+                                "sheetId": sheetId_budjet,
+                                "dimension": "COLUMNS",
+                                "startIndex": 6,
+                                "endIndex": 7
+                            },
+                            "properties": {
+                                "pixelSize": 150
+                            },
+
+                            "fields": "pixelSize"
+                        },
+
+                    }
+
+                ]
+            }).execute()
+            # задаем размеры таблиц
+            results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheetId, body={
+                "requests": [
+                    # Таблица Источники размер.
+                    # Задать ширину столбцов E : 150 пикселей
+                    {
+                        "updateDimensionProperties": {
+                            "range": {
+                                "sheetId": sheetId_istochniki,
+                                "dimension": "COLUMNS",
+                                "startIndex": 4,
+                                "endIndex": 5
+                            },
+                            "properties": {
+                                "pixelSize": 150
+                            },
+                            "fields": "pixelSize"
+                        }
+                    },
+                    # Задать ширину столбца F: 200 пикселей
+                    {
+                        "updateDimensionProperties": {
+                            "range": {
+                                "sheetId": sheetId_istochniki,
+                                "dimension": "COLUMNS",
+                                "startIndex": 5,
+                                "endIndex": 6
+                            },
+                            "properties": {
+                                "pixelSize": 200
+                            },
+                            "fields": "pixelSize"
+                        }
+                    }
+                ]
+            }).execute()
             #задаем размеры таблиц
             results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheetId, body={
                 "requests": [
@@ -387,6 +397,7 @@ async def email(message: types.Message, state: FSMContext):
                     {
                         "updateDimensionProperties": {
                             "range": {
+
                                 "sheetId": sheetId_kategorii,
                                 "dimension": "COLUMNS",  # Задаем ширину колонки
                                 "startIndex": 0,  # Нумерация начинается с нуля
@@ -435,7 +446,8 @@ async def email(message: types.Message, state: FSMContext):
                                 "sheetId": sheetId_kategorii,
                                 "dimension": "COLUMNS",
                                 "startIndex": 5,
-                                "endIndex": 6
+                                "endIndex": 6,
+
                             },
                             "properties": {
                                 "pixelSize": 200
@@ -457,24 +469,59 @@ async def email(message: types.Message, state: FSMContext):
                             },
                             "fields": "pixelSize"
                         }
+                    },
+                    #делаем список в листе категории
+                    {
+                        "setDataValidation": {
+                            "range": {
+                                "sheetId": sheetId_kategorii,
+                                      "startRowIndex": 0,
+                                        "endRowIndex": 1,
+                                        "startColumnIndex": 5,
+                                         "endColumnIndex": 6
+                            },
+                            "rule": {
+                                "condition": {
+                                    "type": 'ONE_OF_LIST',
+                                    "values": [
+                                        {
+                                            "userEnteredValue": 'Наименование',
+                                        },
+                                        {
+                                            "userEnteredValue": 'NO',
+                                        },
+                                        {
+                                            "userEnteredValue": 'MAYBE',
+                                        },
+                                    ],
+                                },
+                                "showCustomUi": True,
+                                "strict": True
+                            }
+
+                        }
+
                     }
                 ]
             }).execute()
-            # Наводим косметический ремонт с топом страницы
-            results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheetId, body={
-                "requests": [
-                    
-                    {
-                  "top": {
-                      "style": "DASHED",
-                      "width": 1,
-                      "color": {
-                        "blue": 1.0
-                      },
-                    }
-                }
-                ]
-                }).execute()
+
+
+
+            # # Наводим косметический ремонт с топом страницы
+            # results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheetId, body={
+            #     "requests": [
+            #
+            #         {
+            #       "top": {
+            #           "style": "DASHED",
+            #           "width": 1,
+            #           "color": {
+            #             "blue": 1.0
+            #           },
+            #         }
+            #     }
+            #     ]
+            #     }).execute()
             await bot.send_message(message.from_user.id, 'ШАГ 2/3.Введите город в котором вы проживаете')
             break
         else:
