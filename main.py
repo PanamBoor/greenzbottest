@@ -1933,7 +1933,7 @@ async def getDataStep(message: types.Message, state: FSMContext):
                     }).execute()
                 await bot.send_message(message.from_user.id, "Записано в Ежемесячные расходы → Неразобранное")
 
-               
+
 # нажатие на кнопку Время напоминания
 # @dp.message_handler(Text(equals=["2. Время напоминания"]))
 # async def btn_balance(message: types.Message):
